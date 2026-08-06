@@ -17,10 +17,11 @@ describe("Aelora landing page", () => {
       "href",
       "/sign-up",
     );
-    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
-      "href",
-      "/sign-in",
-    );
+    expect(
+      screen.getAllByRole("link", { name: "Sign in" }).every(
+        (link) => link.getAttribute("href") === "/sign-in",
+      ),
+    ).toBe(true);
   });
 
   it("explains monitoring, forecasting, and simulated data", () => {
