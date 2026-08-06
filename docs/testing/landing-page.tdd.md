@@ -33,8 +33,8 @@ The complete application gate then passed:
 ```text
 Lint        passed
 Type-check  passed
-Test Files  13 passed (13)
-Tests       40 passed (40)
+Test Files  14 passed (14)
+Tests       41 passed (41)
 Build       passed (21 routes)
 Audit       0 vulnerabilities
 ```
@@ -67,4 +67,13 @@ Successful login requires PostgreSQL, the committed migration, and the local see
 
 ## Environment note
 
-At verification time, Docker could not download the PostgreSQL image because the host clock was earlier than the container registry certificate's validity date. Correcting and synchronizing the Windows clock is required before running the database bootstrap commands.
+Docker could not download its PostgreSQL image because the host clock was earlier than the container registry certificate's validity date. The already-installed native PostgreSQL 18 service was used instead. The `aelora` role and database were created locally, the migration applied, and the idempotent seed completed.
+
+Real HTTP verification then confirmed:
+
+```text
+USER   sign-in 200 -> /dashboard 200 (2 session cookies)
+ADMIN  sign-in 200 -> /admin     200 (2 session cookies)
+```
+
+The seed initially exposed a standalone-runtime boundary failure caused by importing Next.js's `server-only` entrypoint. Commit `8b8152c` records the failing regression test and commit `e47933e` moves the shared Better Auth instance behind a framework-neutral module. The final committed-state application gate passed after this fix.

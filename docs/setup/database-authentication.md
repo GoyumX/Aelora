@@ -3,7 +3,7 @@
 ## Local development
 
 1. Copy `.env.example` to `.env` and replace every placeholder. Never commit `.env`.
-2. Start PostgreSQL with `docker compose up -d postgres`.
+2. Start PostgreSQL with `docker compose up -d postgres`, or use an existing local PostgreSQL service and create the database/role named by `DATABASE_URL`.
 3. Apply the migration with `npm run db:deploy`.
 4. Create the development accounts and simulated sites with `npm run db:seed`.
 5. Start Aelora with `npm run dev`.
