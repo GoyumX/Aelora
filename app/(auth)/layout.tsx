@@ -13,8 +13,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     <main className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(30rem,0.8fr)]">
       <section className="relative hidden overflow-hidden bg-primary p-12 text-primary-foreground lg:flex lg:flex-col lg:justify-end">
         <Image alt="" className="object-cover" fill priority sizes="55vw" src="/images/aelora-auth-energy.png" />
-        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#102d2e] via-[#102d2e]/62 to-[#102d2e]/10" />
-        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-[#102d2e]/45 to-transparent" />
+        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#0b1f3a] via-[#0b1f3a]/62 to-[#0b1f3a]/10" />
+        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-[#0b1f3a]/45 to-transparent" />
         <div className="relative max-w-xl">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-foreground/70">Solar intelligence</p>
           <h1 className="mt-4 font-heading text-4xl font-semibold tracking-[-0.045em] text-balance xl:text-5xl">Understand your energy. Anticipate what comes next.</h1>

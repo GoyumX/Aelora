@@ -67,7 +67,7 @@ export default function HomePage() {
         Skip to main content
       </a>
 
-      <header className="absolute inset-x-0 top-0 z-40 border-b border-white/10 bg-[#102d2e]/45 text-white backdrop-blur-md">
+      <header className="absolute inset-x-0 top-0 z-40 border-b border-white/10 bg-[#0b1f3a]/45 text-white backdrop-blur-md">
         <nav
           aria-label="Public navigation"
           className="mx-auto flex h-18 max-w-[90rem] items-center justify-between px-4 sm:px-6 lg:px-8"
@@ -92,7 +92,7 @@ export default function HomePage() {
       </header>
 
       <main id="main-content">
-        <section className="relative flex min-h-[47rem] items-end bg-[#102d2e] text-white sm:min-h-[50rem] lg:items-center">
+        <section className="relative flex min-h-[47rem] items-end bg-[#0b1f3a] text-white sm:min-h-[50rem] lg:items-center">
           <Image
             alt="Solar panels on a tropical Sri Lankan home at sunrise"
             className="object-cover object-[64%_center] opacity-78"
@@ -101,8 +101,8 @@ export default function HomePage() {
             sizes="100vw"
             src="/images/aelora-solar-home-hero.png"
           />
-          <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,38,39,.97)_0%,rgba(8,38,39,.86)_38%,rgba(8,38,39,.26)_76%,rgba(8,38,39,.12)_100%)]" />
-          <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#102d2e]/80 to-transparent" />
+          <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,24,48,.97)_0%,rgba(7,24,48,.86)_38%,rgba(7,24,48,.26)_76%,rgba(7,24,48,.12)_100%)]" />
+          <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#0b1f3a]/80 to-transparent" />
 
           <div className="relative mx-auto w-full max-w-[90rem] px-4 pb-16 pt-36 sm:px-6 sm:pb-20 lg:px-8 lg:py-40">
             <div className="max-w-2xl">
@@ -171,7 +171,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="bg-[#102d2e] text-white" id="simulation">
+        <section className="bg-[#0b1f3a] text-white" id="simulation">
           <div className="mx-auto grid max-w-[90rem] gap-12 px-4 py-24 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:px-8 lg:py-32">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-energy">Digital twin mode</p>
@@ -193,7 +193,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="relative mx-auto w-full max-w-xl rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-2xl shadow-black/20">
-              <div className="rounded-2xl border border-white/10 bg-[#173738] p-6">
+              <div className="rounded-2xl border border-white/10 bg-[#102a4c] p-6">
                 <div className="flex items-center justify-between"><div><p className="text-xs text-white/50">Simulated live output</p><p className="mt-1 font-mono text-3xl font-semibold">4.82 kW</p></div><span className="rounded-full bg-energy/15 px-3 py-1 text-xs font-semibold text-energy">● Healthy</span></div>
                 <div className="mt-8 flex h-40 items-end gap-2" aria-hidden="true">
                   {[18, 28, 43, 61, 75, 91, 82, 70, 51, 35, 22].map((height, index) => <div className="flex-1 rounded-t bg-gradient-to-t from-energy/35 to-solar" key={index} style={{ height: `${height}%` }} />)}
