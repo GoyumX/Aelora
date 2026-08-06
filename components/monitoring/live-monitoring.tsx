@@ -21,7 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import type { TelemetryApiResponse, TelemetrySnapshot } from "@/lib/telemetry/types";
 import { cn } from "@/lib/utils";
 
-async function fetchTelemetry(url: string): Promise<TelemetryApiResponse> {
+export async function fetchTelemetry(url: string): Promise<TelemetryApiResponse> {
   const response = await fetch(url, { cache: "no-store" });
   if (!response.ok) throw new Error("Telemetry refresh failed");
   return response.json();

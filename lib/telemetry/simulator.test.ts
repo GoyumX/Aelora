@@ -41,4 +41,30 @@ describe("canonical telemetry simulator", () => {
     expect(batteryFault.batteryPowerW).toBe(0);
     expect(batteryFault.deviceStatus).toBe("BATTERY_FAULT");
   });
+
+  it("reduces output for cloud and shading scenarios and identifies the affected array", () => {
+    const normal = createTelemetrySnapshot(site, observedAt, "NORMAL");
+    const cloud = createTelemetrySnapshot(site, observedAt, "SUDDEN_CLOUD");
+    const shading = createTelemetrySnapshot(site, observedAt, "PARTIAL_SHADING");
+
+    expect(cloud.pvPowerW).toBeLessThan(normal.pvPowerW);
+    expect(cloud.deviceStatus).toBe("CLOUD_RAMP");
+    expect(shading.pvPowerW).toBeLessThan(normal.pvPowerW);
+    expect(shading.arrays[0].status).toBe("UNDERPERFORMING");
+  });
+
+  it("reports zero solar electrical output at night", () => {
+    const nighttime = createTelemetrySnapshot(site, new Date("2026-08-07T18:30:00.000Z"));
+
+    expect(nighttime.pvPowerW).toBe(0);
+    expect(nighttime.dcVoltageV).toBe(0);
+    expect(nighttime.dcCurrentA).toBe(0);
+  });
+
+  it("labels a future hardware adapter as measured", () => {
+    const hardware = createTelemetrySnapshot({ ...site, mode: "HARDWARE" }, observedAt);
+
+    expect(hardware.source).toBe("HARDWARE");
+    expect(hardware.quality).toBe("MEASURED");
+  });
 });
