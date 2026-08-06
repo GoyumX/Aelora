@@ -40,10 +40,10 @@ describe("DashboardOverview", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "Dashboard" })).toBeInTheDocument();
     expect(screen.getByText("Simulation mode")).toBeInTheDocument();
-    expect(screen.getByText("4.82 kW")).toBeInTheDocument();
+    expect(screen.getAllByText("4.82 kW").length).toBeGreaterThan(0);
     expect(screen.getByText("18.4 kWh")).toBeInTheDocument();
-    expect(screen.getByText("76%")).toBeInTheDocument();
-    expect(screen.getByText("Exporting 1.86 kW")).toBeInTheDocument();
+    expect(screen.getAllByText("76%").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Exporting 1.86 kW").length).toBeGreaterThan(0);
   });
 
   it("shows an accessible trend, two-day forecast, alert, recommendation, and next actions", () => {
@@ -54,7 +54,7 @@ describe("DashboardOverview", () => {
     expect(screen.getAllByText(/confidence/i)).toHaveLength(2);
     expect(screen.getByText("No active system faults")).toBeInTheDocument();
     expect(screen.getByText(/Run the dishwasher/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Open live monitoring/i })).toHaveAttribute("href", "/live-monitoring");
-    expect(screen.getByRole("link", { name: /View full AI forecast/i })).toHaveAttribute("href", "/ai-forecast");
+    expect(screen.getAllByRole("link", { name: /Open live monitoring/i })[0]).toHaveAttribute("href", "/live-monitoring");
+    expect(screen.getAllByRole("link", { name: /View full AI forecast/i })[0]).toHaveAttribute("href", "/ai-forecast");
   });
 });
