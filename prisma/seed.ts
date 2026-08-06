@@ -2,7 +2,7 @@ import "dotenv/config";
 
 import { UserRole } from "@prisma/client";
 
-import { auth } from "../lib/auth";
+import { auth } from "../lib/auth-instance";
 import { db } from "../lib/db";
 
 function requiredSecret(name: "SEED_ADMIN_PASSWORD" | "SEED_USER_PASSWORD") {
