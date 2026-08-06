@@ -34,4 +34,34 @@ describe("SignUpForm", () => {
     await waitFor(() => expect(signUpEmail).not.toHaveBeenCalled());
     expect(screen.getByRole("alert")).toHaveTextContent("at least 10 characters");
   });
+
+  it("submits a valid account with the user dashboard destination", async () => {
+    signUpEmail.mockResolvedValue({ data: {}, error: null } as never);
+    render(<SignUpForm />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Full name" }), { target: { value: "Solar User" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Email address" }), { target: { value: "SOLAR@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "SolarPower42" } });
+    fireEvent.submit(screen.getByRole("button", { name: "Create account" }).closest("form")!);
+
+    await waitFor(() =>
+      expect(signUpEmail).toHaveBeenCalledWith({
+        name: "Solar User",
+        email: "solar@example.com",
+        password: "SolarPower42",
+        callbackURL: "/dashboard",
+      }),
+    );
+  });
+
+  it("does not expose the auth provider's registration error", async () => {
+    signUpEmail.mockResolvedValue({ data: null, error: { message: "database detail" } } as never);
+    render(<SignUpForm />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Full name" }), { target: { value: "Solar User" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Email address" }), { target: { value: "solar@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "SolarPower42" } });
+    fireEvent.submit(screen.getByRole("button", { name: "Create account" }).closest("form")!);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("could not create the account");
+    expect(screen.queryByText("database detail")).not.toBeInTheDocument();
+  });
 });

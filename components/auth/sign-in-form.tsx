@@ -33,7 +33,7 @@ export function SignInForm() {
     setPending(true);
     const response = await authClient.signIn.email({
       ...result.data,
-      callbackURL: getSafeCallbackUrl(searchParams.get("callbackUrl")),
+      callbackURL: getSafeCallbackUrl(searchParams?.get("callbackUrl")),
     });
 
     if (response.error) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { Bell, ChevronDown, MapPin, UserRound } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { MobileNavigation } from "@/components/shell/mobile-navigation";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
@@ -28,6 +29,7 @@ export function AppHeader({
   user = { name: "Aelora User", email: "" },
   role = "USER",
 }: AppHeaderProps) {
+  const router = useRouter();
   const initials = user.name
     .split(/\s+/)
     .slice(0, 2)
@@ -37,7 +39,8 @@ export function AppHeader({
 
   async function signOut() {
     await authClient.signOut();
-    window.location.assign("/sign-in");
+    router.replace("/sign-in");
+    router.refresh();
   }
 
   return (

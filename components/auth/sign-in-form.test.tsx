@@ -37,4 +37,31 @@ describe("SignInForm", () => {
     await waitFor(() => expect(signInEmail).not.toHaveBeenCalled());
     expect(screen.getByRole("alert")).toHaveTextContent("valid email");
   });
+
+  it("submits normalized valid credentials with a safe default destination", async () => {
+    signInEmail.mockResolvedValue({ data: {}, error: null } as never);
+    render(<SignInForm />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Email address" }), { target: { value: "USER@Example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "valid-password" } });
+    fireEvent.submit(screen.getByRole("button", { name: "Sign in" }).closest("form")!);
+
+    await waitFor(() =>
+      expect(signInEmail).toHaveBeenCalledWith({
+        email: "user@example.com",
+        password: "valid-password",
+        callbackURL: "/dashboard",
+      }),
+    );
+  });
+
+  it("shows a generic error when authentication fails", async () => {
+    signInEmail.mockResolvedValue({ data: null, error: { message: "internal" } } as never);
+    render(<SignInForm />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Email address" }), { target: { value: "user@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "valid-password" } });
+    fireEvent.submit(screen.getByRole("button", { name: "Sign in" }).closest("form")!);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("could not sign you in");
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
+  });
 });

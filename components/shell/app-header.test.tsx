@@ -1,7 +1,12 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { AppHeader } from "@/components/shell/app-header";
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/dashboard",
+  useRouter: () => ({ replace: vi.fn(), refresh: vi.fn() }),
+}));
 
 describe("AppHeader", () => {
   it("labels the site selector and icon-only controls", () => {

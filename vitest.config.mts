@@ -12,10 +12,15 @@ export default defineConfig({
       reporter: ["text", "json-summary"],
       include: [
         "components/brand/aelora-mark.tsx",
+        "components/auth/sign-in-form.tsx",
+        "components/auth/sign-up-form.tsx",
         "components/shell/app-shell.tsx",
         "components/shell/app-sidebar.tsx",
         "components/shell/page-placeholder.tsx",
         "lib/navigation.ts",
+        "lib/auth/authorization.ts",
+        "lib/auth/route-access.ts",
+        "lib/auth/validation.ts",
       ],
       thresholds: {
         branches: 80,
