@@ -39,6 +39,13 @@ enum SiteStatus {
   MAINTENANCE
 }
 
+enum EquipmentStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+  ARCHIVED
+}
+
 model User {
   id            String          @id @default(cuid())
   name          String
@@ -135,7 +142,73 @@ model SolarSite {
   updatedAt DateTime   @updatedAt
   deletedAt DateTime?
   owner     User       @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  arrays    SolarArray[]
+  inverters Inverter[]
+  battery   Battery?
 
   @@index([ownerId, status])
   @@index([ownerId, createdAt])
+}
+
+model SolarArray {
+  id                         String          @id @default(cuid())
+  siteId                     String
+  name                       String
+  manufacturer               String?
+  model                      String?
+  panelCount                 Int
+  ratedPowerW                Int
+  tiltDeg                    Float
+  azimuthDeg                 Float
+  installationDate           DateTime?
+  temperatureCoefficientPctC Float?
+  status                     EquipmentStatus @default(ACTIVE)
+  createdAt                  DateTime        @default(now())
+  updatedAt                  DateTime        @updatedAt
+  archivedAt                 DateTime?
+  site                       SolarSite       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, name])
+  @@index([siteId, status])
+}
+
+model Inverter {
+  id                   String          @id @default(cuid())
+  siteId               String
+  manufacturer         String
+  model                String
+  serialAlias          String?
+  acRatingW            Int
+  efficiencyPct        Float
+  phase                Int             @default(1)
+  communicationAdapter String          @default("SIMULATOR")
+  pollingIntervalSec   Int             @default(15)
+  status               EquipmentStatus @default(ACTIVE)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  archivedAt           DateTime?
+  site                 SolarSite       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId, status])
+}
+
+model Battery {
+  id                     String          @id @default(cuid())
+  siteId                 String          @unique
+  enabled                Boolean         @default(true)
+  manufacturer           String?
+  model                  String?
+  usableCapacityWh       Int
+  maxChargePowerW        Int
+  maxDischargePowerW     Int
+  minSocPct              Int             @default(10)
+  maxSocPct              Int             @default(95)
+  roundTripEfficiencyPct Float
+  reservePct             Int             @default(20)
+  status                 EquipmentStatus @default(ACTIVE)
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  site                   SolarSite       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId, status])
 }

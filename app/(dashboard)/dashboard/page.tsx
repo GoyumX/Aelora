@@ -12,7 +12,7 @@ export default async function DashboardPage() {
   const site = await db.solarSite.findFirst({
     where: { ownerId: user.id, deletedAt: null },
     orderBy: { createdAt: "asc" },
-    select: { id: true, name: true, mode: true, status: true, timezone: true },
+    select: { id: true, name: true, mode: true, status: true, timezone: true, arrays: { where: { archivedAt: null, status: "ACTIVE" }, select: { panelCount: true, ratedPowerW: true } } },
   });
 
   if (!site) {
@@ -26,5 +26,6 @@ export default async function DashboardPage() {
     );
   }
 
-  return <DashboardOverview snapshot={createDashboardSnapshot(site)} />;
+  const installedCapacityW = site.arrays.reduce((sum, array) => sum + array.panelCount * array.ratedPowerW, 0);
+  return <DashboardOverview snapshot={createDashboardSnapshot({ ...site, installedCapacityW: installedCapacityW || undefined })} />;
 }

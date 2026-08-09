@@ -4,6 +4,7 @@ export type DashboardSite = {
   mode: "SIMULATED" | "HARDWARE";
   status: "ACTIVE" | "INACTIVE" | "MAINTENANCE";
   timezone?: string;
+  installedCapacityW?: number;
 };
 
 export type DashboardSnapshot = {
@@ -55,9 +56,9 @@ function localHour(date: Date, timezone: string) {
   return Number(hour ?? 12) % 24;
 }
 
-function generationAt(hour: number, cloudFactor: number) {
+function generationAt(hour: number, cloudFactor: number, capacityKw: number) {
   if (hour < 6 || hour > 18) return 0;
-  return round(Math.sin(((hour - 6) / 12) * Math.PI) * 5.65 * cloudFactor);
+  return round(Math.sin(((hour - 6) / 12) * Math.PI) * capacityKw * cloudFactor);
 }
 
 function consumptionAt(hour: number) {
@@ -72,7 +73,8 @@ export function createDashboardSnapshot(site: DashboardSite, observedAt = new Da
   const hour = localHour(observedAt, timezone);
   const daySeed = observedAt.getUTCDate() + site.id.length;
   const cloudFactor = round(0.8 + (daySeed % 5) * 0.035, 3);
-  const pvPowerKw = generationAt(hour, cloudFactor);
+  const capacityKw = (site.installedCapacityW ?? 5650) / 1000;
+  const pvPowerKw = generationAt(hour, cloudFactor, capacityKw);
   const loadPowerKw = consumptionAt(hour);
   const batterySocPct = Math.min(100, Math.max(10, 64 + ((daySeed * 7 + hour * 3) % 25)));
   const rawSurplus = pvPowerKw - loadPowerKw;
@@ -84,7 +86,7 @@ export function createDashboardSnapshot(site: DashboardSite, observedAt = new Da
     const pointHour = index + 6;
     return {
       label: `${String(pointHour).padStart(2, "0")}:00`,
-      generationKw: generationAt(pointHour, cloudFactor),
+      generationKw: generationAt(pointHour, cloudFactor, capacityKw),
       consumptionKw: consumptionAt(pointHour),
     };
   });
@@ -105,7 +107,7 @@ export function createDashboardSnapshot(site: DashboardSite, observedAt = new Da
       weather: {
         condition: cloudFactor < 0.86 ? "Partly cloudy" : "Mostly sunny",
         temperatureC: 28 + (daySeed % 4),
-        irradianceWm2: Math.round(Math.max(0, pvPowerKw / 5.65) * 890),
+        irradianceWm2: Math.round(Math.max(0, pvPowerKw / capacityKw) * 890),
       },
     },
     intraday,

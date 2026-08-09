@@ -6,6 +6,7 @@ type SimulatorSite = {
   timezone: string;
   mode: "SIMULATED" | "HARDWARE";
   status: "ACTIVE" | "INACTIVE" | "MAINTENANCE";
+  installedCapacityW?: number;
 };
 
 const scenarioCopy: Record<TelemetryScenarioCode, TelemetrySnapshot["scenario"]> = {
@@ -40,7 +41,8 @@ function basePoint(site: SimulatorSite, date: Date, scenario: TelemetryScenarioC
   const seed = site.id.length + date.getUTCDate();
   const weatherFactor = 0.84 + (seed % 5) * 0.025;
   const scenarioFactor = scenario === "SUDDEN_CLOUD" ? 0.38 : scenario === "PARTIAL_SHADING" ? 0.74 : 1;
-  let pvPowerW = round(Math.max(0, daylight * 5650 * weatherFactor * scenarioFactor));
+  const installedCapacityW = site.installedCapacityW ?? 5650;
+  let pvPowerW = round(Math.max(0, daylight * installedCapacityW * weatherFactor * scenarioFactor));
   const morningPeak = hour >= 6 && hour <= 9 ? 700 : 0;
   const eveningPeak = hour >= 18 && hour <= 22 ? 1050 : 0;
   const loadPowerW = round(920 + morningPeak + eveningPeak + (hour >= 10 && hour <= 16 ? 320 : 0));

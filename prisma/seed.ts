@@ -58,7 +58,7 @@ async function main() {
     role: "USER",
   });
 
-  await db.solarSite.upsert({
+  const userSite = await db.solarSite.upsert({
     where: { slug: "colombo-home" },
     create: {
       ownerId: user.id,
@@ -70,7 +70,7 @@ async function main() {
     update: { ownerId: user.id },
   });
 
-  await db.solarSite.upsert({
+  const adminSite = await db.solarSite.upsert({
     where: { slug: "admin-demo-site" },
     create: {
       ownerId: admin.id,
@@ -80,6 +80,33 @@ async function main() {
       longitude: 79.8612,
     },
     update: { ownerId: admin.id },
+  });
+
+  await db.solarArray.upsert({
+    where: { siteId_name: { siteId: userSite.id, name: "East roof" } },
+    create: { siteId: userSite.id, name: "East roof", manufacturer: "Aelora Demo", model: "Mono 440", panelCount: 7, ratedPowerW: 440, tiltDeg: 18, azimuthDeg: 90, temperatureCoefficientPctC: -0.35 },
+    update: { manufacturer: "Aelora Demo", model: "Mono 440", panelCount: 7, ratedPowerW: 440, tiltDeg: 18, azimuthDeg: 90, status: "ACTIVE", archivedAt: null },
+  });
+  await db.solarArray.upsert({
+    where: { siteId_name: { siteId: userSite.id, name: "West roof" } },
+    create: { siteId: userSite.id, name: "West roof", manufacturer: "Aelora Demo", model: "Mono 440", panelCount: 7, ratedPowerW: 440, tiltDeg: 18, azimuthDeg: 270, temperatureCoefficientPctC: -0.35 },
+    update: { manufacturer: "Aelora Demo", model: "Mono 440", panelCount: 7, ratedPowerW: 440, tiltDeg: 18, azimuthDeg: 270, status: "ACTIVE", archivedAt: null },
+  });
+  await db.solarArray.upsert({
+    where: { siteId_name: { siteId: adminSite.id, name: "Admin demo array" } },
+    create: { siteId: adminSite.id, name: "Admin demo array", panelCount: 12, ratedPowerW: 450, tiltDeg: 15, azimuthDeg: 180 },
+    update: { panelCount: 12, ratedPowerW: 450, tiltDeg: 15, azimuthDeg: 180, status: "ACTIVE", archivedAt: null },
+  });
+
+  const primaryInverter = await db.inverter.findFirst({ where: { siteId: userSite.id, archivedAt: null }, orderBy: { createdAt: "asc" } });
+  const inverterData = { manufacturer: "Aelora Virtual", model: "Digital Twin 6K", serialAlias: "SIM-INV-01", acRatingW: 6000, efficiencyPct: 97.5, phase: 1, communicationAdapter: "SIMULATOR", pollingIntervalSec: 15 };
+  if (primaryInverter) await db.inverter.update({ where: { id: primaryInverter.id }, data: inverterData });
+  else await db.inverter.create({ data: { siteId: userSite.id, ...inverterData } });
+
+  await db.battery.upsert({
+    where: { siteId: userSite.id },
+    create: { siteId: userSite.id, enabled: true, manufacturer: "Aelora Virtual", model: "Home Store 10", usableCapacityWh: 10000, maxChargePowerW: 3000, maxDischargePowerW: 3000, minSocPct: 10, maxSocPct: 95, roundTripEfficiencyPct: 92, reservePct: 20 },
+    update: { enabled: true, manufacturer: "Aelora Virtual", model: "Home Store 10", usableCapacityWh: 10000, maxChargePowerW: 3000, maxDischargePowerW: 3000, minSocPct: 10, maxSocPct: 95, roundTripEfficiencyPct: 92, reservePct: 20, status: "ACTIVE" },
   });
 
   console.info("Aelora development users and simulated sites are ready.");

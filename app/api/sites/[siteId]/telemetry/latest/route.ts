@@ -23,7 +23,7 @@ export async function GET(
       deletedAt: null,
       ...(user.role === "ADMIN" ? {} : { ownerId: user.id }),
     },
-    select: { id: true, name: true, timezone: true, mode: true, status: true },
+    select: { id: true, name: true, timezone: true, mode: true, status: true, arrays: { where: { archivedAt: null, status: "ACTIVE" }, select: { panelCount: true, ratedPowerW: true } } },
   });
 
   if (!site) {
@@ -35,7 +35,7 @@ export async function GET(
 
   return NextResponse.json(
     {
-      data: createTelemetrySnapshot(site),
+      data: createTelemetrySnapshot({ ...site, installedCapacityW: site.arrays.reduce((sum, array) => sum + array.panelCount * array.ratedPowerW, 0) || undefined }),
       meta: { refreshAfterSeconds: 15 },
     },
     { headers: { "Cache-Control": "private, no-store" } },

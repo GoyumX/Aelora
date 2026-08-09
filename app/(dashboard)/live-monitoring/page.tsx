@@ -12,7 +12,7 @@ export default async function LiveMonitoringPage() {
   const site = await db.solarSite.findFirst({
     where: { ownerId: user.id, deletedAt: null },
     orderBy: { createdAt: "asc" },
-    select: { id: true, name: true, timezone: true, mode: true, status: true },
+    select: { id: true, name: true, timezone: true, mode: true, status: true, arrays: { where: { archivedAt: null, status: "ACTIVE" }, select: { panelCount: true, ratedPowerW: true } } },
   });
 
   if (!site) {
@@ -26,5 +26,6 @@ export default async function LiveMonitoringPage() {
     );
   }
 
-  return <LiveMonitoring initialTelemetry={createTelemetrySnapshot(site)} />;
+  const installedCapacityW = site.arrays.reduce((sum, array) => sum + array.panelCount * array.ratedPowerW, 0);
+  return <LiveMonitoring initialTelemetry={createTelemetrySnapshot({ ...site, installedCapacityW: installedCapacityW || undefined })} />;
 }
