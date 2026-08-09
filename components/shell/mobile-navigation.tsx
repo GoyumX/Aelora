@@ -13,8 +13,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import type { UserRole } from "@/lib/auth/authorization";
 
-export function MobileNavigation() {
+export function MobileNavigation({ role = "USER" }: { role?: UserRole }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -36,9 +37,8 @@ export function MobileNavigation() {
           <SheetTitle>Application navigation</SheetTitle>
           <SheetDescription>Navigate to an Aelora workspace page.</SheetDescription>
         </SheetHeader>
-        <AppSidebar onNavigate={() => setOpen(false)} />
+        <AppSidebar onNavigate={() => setOpen(false)} role={role} />
       </SheetContent>
     </Sheet>
   );
 }
-

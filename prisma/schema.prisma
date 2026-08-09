@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum ThemePreference {
+  SYSTEM
+  LIGHT
+  DARK
+}
+
+enum MeasurementSystem {
+  METRIC
+  IMPERIAL
+}
+
+enum SiteMode {
+  SIMULATED
+  HARDWARE
+}
+
+enum SiteStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String
+  email         String          @unique
+  emailVerified Boolean         @default(false)
+  image         String?
+  role          UserRole        @default(USER)
+  status        UserStatus      @default(ACTIVE)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  deletedAt     DateTime?
+  accounts      Account[]
+  sessions      Session[]
+  preference    UserPreference?
+  ownedSites    SolarSite[]
+
+  @@index([status, createdAt])
+  @@index([deletedAt, createdAt])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@index([expiresAt])
+}
+
+model UserPreference {
+  id                 String            @id @default(cuid())
+  userId             String            @unique
+  theme              ThemePreference   @default(SYSTEM)
+  timezone           String            @default("Asia/Colombo")
+  measurementSystem  MeasurementSystem @default(METRIC)
+  emailNotifications Boolean           @default(true)
+  defaultSiteId      String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([defaultSiteId])
+}
+
+model SolarSite {
+  id        String     @id @default(cuid())
+  ownerId   String
+  name      String
+  slug      String     @unique
+  latitude  Float
+  longitude Float
+  timezone  String     @default("Asia/Colombo")
+  mode      SiteMode   @default(SIMULATED)
+  status    SiteStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
+  owner     User       @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+
+  @@index([ownerId, status])
+  @@index([ownerId, createdAt])
+}

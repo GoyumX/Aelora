@@ -14,12 +14,36 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { authClient } from "@/lib/auth-client";
+import type { UserRole } from "@/lib/auth/authorization";
 
-export function AppHeader() {
+type AppHeaderProps = {
+  siteName?: string;
+  user?: { name: string; email: string };
+  role?: UserRole;
+};
+
+export function AppHeader({
+  siteName = "No site configured",
+  user = { name: "Aelora User", email: "" },
+  role = "USER",
+}: AppHeaderProps) {
+  const initials = user.name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+
+  async function signOut() {
+    await authClient.signOut();
+    window.location.assign("/sign-in");
+  }
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <MobileNavigation />
+        <MobileNavigation role={role} />
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
@@ -31,13 +55,13 @@ export function AppHeader() {
             }
           >
             <MapPin aria-hidden="true" className="size-4 text-energy-strong" />
-            <span className="truncate">Colombo Home</span>
+            <span className="truncate">{siteName}</span>
             <ChevronDown aria-hidden="true" className="size-3.5 opacity-60" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-64">
             <DropdownMenuLabel>Solar sites</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Colombo Home</DropdownMenuItem>
+            <DropdownMenuItem>{siteName}</DropdownMenuItem>
             <DropdownMenuItem disabled>Add a site in Configuration</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -66,24 +90,26 @@ export function AppHeader() {
           >
             <Avatar className="size-7">
               <AvatarFallback>
-                <UserRound aria-hidden="true" className="size-4" />
+                {initials || <UserRound aria-hidden="true" className="size-4" />}
               </AvatarFallback>
             </Avatar>
-            <span className="hidden text-sm font-medium sm:inline">Demo User</span>
+            <span className="hidden text-sm font-medium sm:inline">{user.name}</span>
             <ChevronDown
               aria-hidden="true"
               className="hidden size-3.5 opacity-60 sm:block"
             />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Demo User</DropdownMenuLabel>
+            <DropdownMenuLabel>
+              <span className="block">{user.name}</span>
+              <span className="block truncate text-xs font-normal text-muted-foreground">{user.email}</span>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Profile settings</DropdownMenuItem>
-            <DropdownMenuItem disabled>Sign out after auth setup</DropdownMenuItem>
+            <DropdownMenuItem onClick={signOut}>Sign out</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
     </header>
   );
 }
-

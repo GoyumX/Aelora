@@ -2,8 +2,16 @@ import type { ReactNode } from "react";
 
 import { AppHeader } from "@/components/shell/app-header";
 import { AppSidebar } from "@/components/shell/app-sidebar";
+import type { UserRole } from "@/lib/auth/authorization";
 
-export function AppShell({ children }: { children: ReactNode }) {
+type AppShellProps = {
+  children: ReactNode;
+  siteName?: string;
+  user?: { name: string; email: string };
+  role?: UserRole;
+};
+
+export function AppShell({ children, siteName, user, role = "USER" }: AppShellProps) {
   return (
     <div className="min-h-dvh bg-background">
       <a
@@ -13,10 +21,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         Skip to main content
       </a>
       <div className="fixed inset-y-0 left-0 z-40 hidden w-68 lg:block">
-        <AppSidebar />
+        <AppSidebar role={role} />
       </div>
       <div className="min-h-dvh lg:pl-68">
-        <AppHeader />
+        <AppHeader role={role} siteName={siteName} user={user} />
         <main id="main-content" tabIndex={-1}>
           {children}
         </main>

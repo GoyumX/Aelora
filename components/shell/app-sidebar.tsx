@@ -5,20 +5,23 @@ import { usePathname } from "next/navigation";
 
 import { AeloraMark } from "@/components/brand/aelora-mark";
 import { Badge } from "@/components/ui/badge";
-import { appNavigation } from "@/lib/navigation";
+import type { UserRole } from "@/lib/auth/authorization";
+import { getNavigationForRole } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 type AppSidebarProps = {
   className?: string;
   onNavigate?: () => void;
+  role?: UserRole;
 };
 
 function isCurrentRoute(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AppSidebar({ className, onNavigate }: AppSidebarProps) {
+export function AppSidebar({ className, onNavigate, role = "USER" }: AppSidebarProps) {
   const pathname = usePathname();
+  const navigation = getNavigationForRole(role);
 
   return (
     <aside
@@ -42,7 +45,7 @@ export function AppSidebar({ className, onNavigate }: AppSidebarProps) {
         aria-label="Primary navigation"
         className="flex-1 space-y-6 overflow-y-auto px-3 py-5"
       >
-        {appNavigation.map((group) => (
+        {navigation.map((group) => (
           <div key={group.label}>
             <p className="mb-2 px-3 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/55">
               {group.label}
@@ -132,4 +135,3 @@ export function AppSidebar({ className, onNavigate }: AppSidebarProps) {
     </aside>
   );
 }
-
