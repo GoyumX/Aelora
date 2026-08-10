@@ -32,3 +32,13 @@ The endpoint requires a valid session and scopes regular users to sites they own
 - Battery unavailable
 
 Scenario state is currently deterministic and in-process. A later admin simulator control will persist the active scenario and audit every privileged change.
+
+## Historical storage and query
+
+Canonical readings are stored in PostgreSQL with UTC timestamps and a unique `(siteId, source, observedAt)` key. The development seed creates 180 days of deterministic hourly readings for each demo site. This cadence keeps the local dataset compact while providing a full 90-day comparison period; the aggregation layer infers cadence and also supports future one-minute hardware readings.
+
+```text
+GET /api/sites/:siteId/telemetry?from=YYYY-MM-DD&to=YYYY-MM-DD&grain=day|week|month
+```
+
+The endpoint requires a valid owner/admin session, limits ranges to 366 days, renders buckets in the site timezone, and returns energy totals in integer watt-hours. Grid import/export and battery charge/discharge are separated according to the canonical sign convention. Completeness is the ratio of stored samples to expected samples at the inferred cadence.
