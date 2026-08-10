@@ -46,6 +46,19 @@ enum EquipmentStatus {
   ARCHIVED
 }
 
+enum TelemetrySource {
+  SIMULATOR
+  HARDWARE
+}
+
+enum TelemetryQuality {
+  SIMULATED
+  MEASURED
+  ESTIMATED
+  STALE
+  MISSING
+}
+
 model User {
   id            String          @id @default(cuid())
   name          String
@@ -145,9 +158,39 @@ model SolarSite {
   arrays    SolarArray[]
   inverters Inverter[]
   battery   Battery?
+  telemetry TelemetryReading[]
 
   @@index([ownerId, status])
   @@index([ownerId, createdAt])
+}
+
+model TelemetryReading {
+  id                       String           @id @default(cuid())
+  siteId                   String
+  observedAt               DateTime
+  source                   TelemetrySource
+  quality                  TelemetryQuality
+  pvPowerW                 Int
+  pvEnergyTodayWh          Int
+  loadPowerW               Int
+  gridPowerW               Int
+  batteryPowerW            Int
+  batterySocPct            Int
+  dcVoltageV               Float
+  dcCurrentA               Float
+  acVoltageV               Float
+  acCurrentA               Float
+  gridVoltageV             Float
+  frequencyHz              Float
+  inverterTemperatureC     Float
+  panelTemperatureC        Float
+  irradianceWm2            Int
+  deviceStatus             String
+  createdAt                DateTime         @default(now())
+  site                     SolarSite        @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, source, observedAt])
+  @@index([siteId, observedAt(sort: Desc)])
 }
 
 model SolarArray {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { aggregateTelemetry, historyQuerySchema, historyToCsv } from "@/lib/telemetry/history";
+import { aggregateTelemetry, historyQuerySchema, historyToCsv, inferSampleIntervalMinutes } from "@/lib/telemetry/history";
 
 const readings = [
   { observedAt: new Date("2026-08-01T00:00:00.000Z"), pvPowerW: 1000, loadPowerW: 800, gridPowerW: -200, batteryPowerW: 0, irradianceWm2: 500, quality: "SIMULATED" as const },
@@ -29,5 +29,10 @@ describe("telemetry history", () => {
 
     expect(csv).toContain("grid_import_kwh,grid_export_kwh");
     expect(csv).toContain("2026-08-01");
+  });
+
+  it("infers hourly or future minute-level sample cadence without overcounting energy", () => {
+    expect(inferSampleIntervalMinutes(readings)).toBe(60);
+    expect(inferSampleIntervalMinutes([{ observedAt: new Date("2026-08-01T00:00:00Z") }, { observedAt: new Date("2026-08-01T00:01:00Z") }])).toBe(1);
   });
 });

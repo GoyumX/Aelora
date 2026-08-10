@@ -4,6 +4,7 @@ import { UserRole } from "@prisma/client";
 
 import { auth } from "../lib/auth-instance";
 import { db } from "../lib/db";
+import { createTelemetrySnapshot } from "../lib/telemetry/simulator";
 
 function requiredSecret(name: "SEED_ADMIN_PASSWORD" | "SEED_USER_PASSWORD") {
   const value = process.env[name];
@@ -41,6 +42,27 @@ async function ensureUser(input: {
       },
     },
   });
+}
+
+async function seedTelemetry(site: { id: string; name: string; timezone: string; mode: "SIMULATED" | "HARDWARE"; status: "ACTIVE" | "INACTIVE" | "MAINTENANCE" }, installedCapacityW: number) {
+  const end = new Date();
+  end.setUTCMinutes(0, 0, 0);
+  const readings = Array.from({ length: 180 * 24 }, (_, index) => {
+    const observedAt = new Date(end.getTime() - (180 * 24 - index) * 3_600_000);
+    const snapshot = createTelemetrySnapshot({ ...site, installedCapacityW }, observedAt);
+    return {
+      siteId: site.id, observedAt, source: snapshot.source, quality: snapshot.quality,
+      pvPowerW: snapshot.pvPowerW, pvEnergyTodayWh: snapshot.pvEnergyTodayWh, loadPowerW: snapshot.loadPowerW,
+      gridPowerW: snapshot.gridPowerW, batteryPowerW: snapshot.batteryPowerW, batterySocPct: snapshot.batterySocPct,
+      dcVoltageV: snapshot.dcVoltageV, dcCurrentA: snapshot.dcCurrentA, acVoltageV: snapshot.acVoltageV,
+      acCurrentA: snapshot.acCurrentA, gridVoltageV: snapshot.gridVoltageV, frequencyHz: snapshot.frequencyHz,
+      inverterTemperatureC: snapshot.inverterTemperatureC, panelTemperatureC: snapshot.panelTemperatureC,
+      irradianceWm2: snapshot.irradianceWm2, deviceStatus: snapshot.deviceStatus,
+    };
+  });
+  for (let index = 0; index < readings.length; index += 500) {
+    await db.telemetryReading.createMany({ data: readings.slice(index, index + 500), skipDuplicates: true });
+  }
 }
 
 async function main() {
@@ -108,6 +130,9 @@ async function main() {
     create: { siteId: userSite.id, enabled: true, manufacturer: "Aelora Virtual", model: "Home Store 10", usableCapacityWh: 10000, maxChargePowerW: 3000, maxDischargePowerW: 3000, minSocPct: 10, maxSocPct: 95, roundTripEfficiencyPct: 92, reservePct: 20 },
     update: { enabled: true, manufacturer: "Aelora Virtual", model: "Home Store 10", usableCapacityWh: 10000, maxChargePowerW: 3000, maxDischargePowerW: 3000, minSocPct: 10, maxSocPct: 95, roundTripEfficiencyPct: 92, reservePct: 20, status: "ACTIVE" },
   });
+
+  await seedTelemetry({ id: userSite.id, name: userSite.name, timezone: userSite.timezone, mode: userSite.mode, status: userSite.status }, 6160);
+  await seedTelemetry({ id: adminSite.id, name: adminSite.name, timezone: adminSite.timezone, mode: adminSite.mode, status: adminSite.status }, 5400);
 
   console.info("Aelora development users and simulated sites are ready.");
 }
