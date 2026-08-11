@@ -1,6 +1,6 @@
-# Canonical Telemetry Contract
+# Canonical Telemetry and Gateway Lifecycle Contract
 
-Aelora's monitoring UI consumes one telemetry shape regardless of whether data comes from the deterministic simulator or a future inverter/IoT adapter.
+Aelora's monitoring UI consumes one telemetry shape regardless of whether data comes from the separately running virtual gateway or a future inverter/IoT adapter. The browser never opens a connection to private-LAN equipment; an enrolled edge gateway polls equipment locally, normalizes it, and sends outbound HTTPS requests to Aelora.
 
 ## Sign conventions
 
@@ -12,7 +12,37 @@ Aelora's monitoring UI consumes one telemetry shape regardless of whether data c
 
 ## Source and quality
 
-`source` identifies the adapter (`SIMULATOR` or `HARDWARE`). `quality` identifies how the value should be interpreted (`SIMULATED`, `MEASURED`, `ESTIMATED`, `STALE`, or `MISSING`). The current seeded site always shows `SIMULATED`; the interface does not present it as a physical reading.
+`source` identifies the adapter (`SIMULATOR` or `HARDWARE`). `quality` identifies how the value should be interpreted (`SIMULATED`, `MEASURED`, `ESTIMATED`, `STALE`, or `MISSING`). Virtual-gateway readings use `SIMULATOR`/`SIMULATED`; fixture-backed and future physical adapters use `HARDWARE`/`MEASURED`. The interface must never present simulated data as a physical reading.
+
+## Machine endpoints
+
+```text
+POST /api/v1/gateway-enrollments
+POST /api/v1/gateways/:gatewayId/telemetry-batches
+POST /api/v1/gateways/:gatewayId/heartbeats
+```
+
+Enrollment exchanges a short-lived, single-use claim token for a gateway identity, credential, telemetry path, and heartbeat path. The two gateway endpoints require `Authorization: Bearer <gateway credential>`; site scope is derived from the authenticated gateway and is never accepted from a browser or payload as authority.
+
+New telemetry is accepted with `201`; an identical idempotent replay returns `200`. Conflicting sequence reuse returns `409`, authentication failures return `401`, and invalid contracts or timing windows return `422`. Accepted telemetry is written transactionally before any page can display it.
+
+Heartbeats and telemetry answer different questions:
+
+- `lastHeartbeatAt` says the gateway process and its Aelora connection are alive.
+- `lastTelemetryAt` says the site has delivered a fresh measurement batch.
+- Pausing telemetry does not pause heartbeat delivery, so the UI can show an online gateway with stale measurements instead of incorrectly calling the gateway offline.
+
+Telemetry and heartbeat IDs are idempotent. Payload timestamps have bounded future skew, and telemetry older than the replay window is rejected. Each device observation is checked against the same timing and range contract.
+
+## Credential lifecycle
+
+Browser-session routes let an authorized site owner or admin request a rotation or revoke a gateway. A rotation creates a pending credential without immediately breaking the running gateway. The gateway operator places that value into the local console; the first authenticated machine request using it atomically promotes it and invalidates the former credential. Revocation immediately rejects both current and pending credentials.
+
+Plaintext enrollment and rotated credentials are shown only at issuance, while Aelora stores non-reversible hashes. The gateway stores its active credential in its local SQLite state. Production deployment requires TLS and an operating-system-protected gateway data directory.
+
+## Southbound adapter boundary
+
+The virtual plant, SunSpec fixture adapter, and Fronius JSON fixture adapter all normalize into the same `SimulationTick`/gateway envelope units and sign conventions. The fixtures prove mapping, scale factors, source, quality, and balance without a physical device. Live rollout adds read-only LAN transports in front of those normalizers; it does not change Aelora's public ingest or page contracts.
 
 ## Latest snapshot endpoint
 
@@ -22,16 +52,17 @@ GET /api/sites/:siteId/telemetry/latest
 
 The endpoint requires a valid session and scopes regular users to sites they own. A missing or cross-owner site returns `404` to avoid disclosing site existence. Responses use a `{ data, meta }` envelope, disable caching, and currently advertise a 15-second polling interval.
 
-## Current simulator scenarios
+## Virtual gateway scenarios
 
-- Normal operation
-- Sudden cloud ramp
-- Partial shading / underperforming array
-- Grid outage
+- Cloud ramp
+- Rain day
+- Dirty array
+- Partial shade
 - Inverter fault
-- Battery unavailable
+- Battery low
+- Grid outage
 
-Scenario state is currently deterministic and in-process. A later admin simulator control will persist the active scenario and audit every privileged change.
+The separately running gateway applies scenarios for a caller-selected duration and restores the previous plant state automatically. Scenario expiry is also checked by the heartbeat loop, so restoration still happens when telemetry publishing is paused.
 
 ## Historical storage and query
 
