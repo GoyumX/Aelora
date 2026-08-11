@@ -24,7 +24,7 @@ describe("GatewaySetup", () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/sites/site-1/gateways", expect.objectContaining({ method: "POST" })));
     expect(await screen.findByText("aelora_enroll_example-secret")).toBeInTheDocument();
-    expect(screen.getByText(/separate Python gateway/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/separate Python gateway/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/shown only in this response/i)).toBeInTheDocument();
   });
 });
