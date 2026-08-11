@@ -125,10 +125,10 @@ export function AppSidebar({ className, onNavigate, role = "USER" }: AppSidebarP
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-energy opacity-40 motion-reduce:animate-none" />
               <span className="relative inline-flex size-2 rounded-full bg-energy" />
             </span>
-            Simulation ready
+            Gateway pipeline ready
           </div>
           <p className="mt-1 text-xs leading-5 text-sidebar-foreground/60">
-            Device data will connect in a later phase.
+            Live data arrives through an enrolled site gateway.
           </p>
         </div>
       </div>

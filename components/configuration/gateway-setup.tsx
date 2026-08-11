@@ -28,7 +28,7 @@ export function GatewaySetup({ siteId }: { siteId: string }) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: form.get("name"),
+        name: form.get("gatewayName"),
         mode: "VIRTUAL",
         expectedIntervalSec: Number(form.get("expectedIntervalSec")),
       }),
@@ -50,7 +50,7 @@ export function GatewaySetup({ siteId }: { siteId: string }) {
 
   return (
     <form className="grid gap-4" onSubmit={submit}>
-      <ConfigurationField defaultValue="Development virtual plant" label="Gateway name" name="name" required />
+      <ConfigurationField defaultValue="Development virtual plant" label="Gateway name" name="gatewayName" required />
       <ConfigurationField defaultValue="30" hint="Aelora marks delayed equipment stale after missed intervals." label="Publish interval (seconds)" max="3600" min="10" name="expectedIntervalSec" required type="number" />
       <div className="flex flex-wrap items-center gap-3">
         <Button disabled={pending} type="submit"><Plus aria-hidden="true" />{pending ? "Creating..." : "Create enrollment"}</Button>
