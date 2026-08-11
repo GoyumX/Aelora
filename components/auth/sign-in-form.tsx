@@ -43,7 +43,7 @@ export function SignInForm() {
   }
 
   return (
-    <form className="space-y-5" noValidate onSubmit={handleSubmit}>
+    <form className="space-y-5" method="post" noValidate onSubmit={handleSubmit}>
       <div className="space-y-2">
         <Label htmlFor="email">Email address</Label>
         <Input autoComplete="email" id="email" name="email" placeholder="you@example.com" type="email" />

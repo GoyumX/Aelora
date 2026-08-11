@@ -41,7 +41,7 @@ export function SignUpForm() {
   }
 
   return (
-    <form className="space-y-5" noValidate onSubmit={handleSubmit}>
+    <form className="space-y-5" method="post" noValidate onSubmit={handleSubmit}>
       <div className="space-y-2">
         <Label htmlFor="name">Full name</Label>
         <Input autoComplete="name" id="name" name="name" placeholder="Your name" />
