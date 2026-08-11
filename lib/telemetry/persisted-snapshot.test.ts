@@ -75,4 +75,48 @@ describe("persisted telemetry snapshot", () => {
     expect(result.connectivity.gateway.status).toBe("STALE");
     expect(result.quality).toBe("STALE");
   });
+
+  it("handles a site with no enrolled gateway without inventing devices or array power", () => {
+    const result = createPersistedTelemetrySnapshot({
+      site: { id: "site-1", name: "Colombo Home" },
+      reading: { ...reading, deviceStatus: "VENDOR_SPECIFIC_STATUS" },
+      recentReadings: [],
+      gateway: null,
+      now: new Date("2026-08-11T10:30:30.000Z"),
+    });
+
+    expect(result.connectivity.gateway).toMatchObject({ id: null, status: "NEVER_SEEN", lastSeenAt: null });
+    expect(result.connectivity.devices).toEqual([]);
+    expect(result.arrays).toEqual([]);
+    expect(result.deviceStatus).toBe("NORMAL");
+    expect(result.quality).toBe("STALE");
+  });
+
+  it("prefers an explicit offline device state and safely ignores non-numeric metrics", () => {
+    const result = createPersistedTelemetrySnapshot({
+      site: { id: "site-1", name: "Colombo Home" },
+      reading,
+      recentReadings: [reading],
+      gateway: {
+        id: "gateway-1",
+        name: "Virtual plant",
+        lastSeenAt: new Date("2026-08-11T10:30:00.000Z"),
+        expectedIntervalSec: 30,
+        devices: [{
+          externalId: "array-east",
+          name: "East roof",
+          kind: "PV_ARRAY",
+          connectivityStatus: "OFFLINE",
+          operationalState: "UNKNOWN",
+          lastSeenAt: null,
+          expectedIntervalSec: 30,
+          metrics: { powerW: "missing" },
+        }],
+      },
+      now: new Date("2026-08-11T10:30:30.000Z"),
+    });
+
+    expect(result.connectivity.devices[0].status).toBe("OFFLINE");
+    expect(result.arrays[0]).toMatchObject({ powerW: 0, status: "OFFLINE" });
+  });
 });
