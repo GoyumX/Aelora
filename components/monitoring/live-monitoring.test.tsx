@@ -45,6 +45,13 @@ const telemetry: TelemetrySnapshot = {
     pvPowerW: 3600 + index * 100,
     loadPowerW: 1400 + index * 20,
   })),
+  connectivity: {
+    gateway: { id: "gateway-demo", name: "Virtual plant", status: "ONLINE", lastSeenAt: "2026-08-07T06:30:00.000Z", expectedIntervalSec: 30 },
+    devices: [
+      { externalId: "east", name: "East array", kind: "PV_ARRAY", status: "ONLINE", operationalState: "RUNNING", lastSeenAt: "2026-08-07T06:30:00.000Z" },
+      { externalId: "inverter", name: "Main inverter", kind: "INVERTER", status: "ONLINE", operationalState: "RUNNING", lastSeenAt: "2026-08-07T06:30:00.000Z" },
+    ],
+  },
 };
 
 describe("LiveMonitoring", () => {
@@ -59,7 +66,9 @@ describe("LiveMonitoring", () => {
     render(<LiveMonitoring initialTelemetry={telemetry} />);
 
     expect(screen.getByRole("heading", { level: 1, name: "Live Monitoring" })).toBeInTheDocument();
-    expect(screen.getByText("Simulated data")).toBeInTheDocument();
+    expect(screen.getByText("Virtual gateway data")).toBeInTheDocument();
+    expect(screen.getByText("Gateway online")).toBeInTheDocument();
+    expect(screen.getByText("Main inverter")).toBeInTheDocument();
     expect(screen.getByText("Normal operation")).toBeInTheDocument();
     expect(screen.getByText("4.82 kW")).toBeInTheDocument();
     expect(screen.getByText("Exporting 1.86 kW")).toBeInTheDocument();
