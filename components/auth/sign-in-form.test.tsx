@@ -21,6 +21,7 @@ describe("SignInForm", () => {
     expect(screen.getByRole("textbox", { name: "Email address" })).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toHaveAttribute("type", "password");
     expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign in" }).closest("form")).toHaveAttribute("method", "post");
   });
 
   it("does not send invalid credentials to the auth service", async () => {

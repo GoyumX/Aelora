@@ -22,6 +22,7 @@ describe("SignUpForm", () => {
     expect(screen.getByRole("textbox", { name: "Email address" })).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toHaveAttribute("type", "password");
     expect(screen.getByRole("button", { name: "Create account" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create account" }).closest("form")).toHaveAttribute("method", "post");
   });
 
   it("rejects a weak password before contacting the auth service", async () => {
