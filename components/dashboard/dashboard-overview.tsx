@@ -26,7 +26,7 @@ function powerFlowLabel(value: number) {
 
 function linePoints(values: number[], max: number) {
   return values
-    .map((value, index) => `${24 + (index / (values.length - 1)) * 552},${190 - (value / max) * 150}`)
+    .map((value, index) => `${24 + (index / Math.max(1, values.length - 1)) * 552},${190 - (value / max) * 150}`)
     .join(" ");
 }
 
@@ -47,8 +47,8 @@ export function DashboardOverview({ snapshot }: { snapshot: DashboardSnapshot })
         <div>
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Operational overview</p>
-            <Badge className="border-primary/20 bg-primary/8 text-primary" variant="outline">Simulation mode</Badge>
-            <Badge className="border-energy/25 bg-energy/10 text-energy-strong" variant="outline">● Healthy</Badge>
+            <Badge className="border-primary/20 bg-primary/8 text-primary" variant="outline">{snapshot.site.mode === "SIMULATED" ? "Virtual gateway" : "Hardware gateway"}</Badge>
+            <Badge className={snapshot.connectivityStatus === "ONLINE" ? "border-energy/25 bg-energy/10 text-energy-strong" : "border-alert-warning/30 bg-alert-warning/10 text-solar-strong"} variant="outline">{snapshot.connectivityStatus === "ONLINE" ? "● Connected" : snapshot.connectivityStatus.toLowerCase().replaceAll("_", " ")}</Badge>
           </div>
           <h1 className="font-heading text-3xl font-semibold tracking-[-0.035em] sm:text-4xl" id="dashboard-title">Dashboard</h1>
           <p className="mt-2 text-muted-foreground">{snapshot.site.name} · {snapshot.sourceLabel}</p>
@@ -76,7 +76,7 @@ export function DashboardOverview({ snapshot }: { snapshot: DashboardSnapshot })
         <Card className="shadow-xs">
           <CardHeader>
             <CardTitle><h2>Today&apos;s energy profile</h2></CardTitle>
-            <CardDescription>Hourly simulated solar generation compared with household consumption.</CardDescription>
+            <CardDescription>Stored gateway samples for solar generation and household consumption.</CardDescription>
           </CardHeader>
           <CardContent>
             <svg aria-label="Intraday solar generation and household consumption" className="h-auto w-full" role="img" viewBox="0 0 600 230">
@@ -94,9 +94,9 @@ export function DashboardOverview({ snapshot }: { snapshot: DashboardSnapshot })
         </Card>
 
         <Card className="shadow-xs">
-          <CardHeader><CardTitle><h2>Weather & solar conditions</h2></CardTitle><CardDescription>Context used by the simulated snapshot.</CardDescription></CardHeader>
+          <CardHeader><CardTitle><h2>Weather & solar conditions</h2></CardTitle><CardDescription>Conditions reported by the site gateway.</CardDescription></CardHeader>
           <CardContent className="space-y-5">
-            <div className="flex items-center gap-4"><span className="grid size-14 place-items-center rounded-2xl bg-solar/15 text-solar-strong"><CloudSun aria-hidden="true" className="size-7" /></span><div><p className="text-lg font-semibold">{metrics.weather.condition}</p><p className="text-sm text-muted-foreground">{metrics.weather.temperatureC}°C in Colombo</p></div></div>
+            <div className="flex items-center gap-4"><span className="grid size-14 place-items-center rounded-2xl bg-solar/15 text-solar-strong"><CloudSun aria-hidden="true" className="size-7" /></span><div><p className="text-lg font-semibold">{metrics.weather.condition}</p><p className="text-sm text-muted-foreground">{metrics.weather.temperatureC}°C panel temperature</p></div></div>
             <dl className="grid grid-cols-2 gap-3"><div className="rounded-xl bg-muted/70 p-4"><dt className="text-xs text-muted-foreground">Irradiance</dt><dd className="mt-1 font-mono text-lg font-semibold">{metrics.weather.irradianceWm2} W/m²</dd></div><div className="rounded-xl bg-muted/70 p-4"><dt className="text-xs text-muted-foreground">Site state</dt><dd className="mt-1 text-lg font-semibold capitalize">{snapshot.site.status.toLowerCase()}</dd></div></dl>
             <Link className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline" href="/live-monitoring">Open live monitoring <ArrowRight aria-hidden="true" className="size-4" /></Link>
           </CardContent>
@@ -116,6 +116,7 @@ export function DashboardOverview({ snapshot }: { snapshot: DashboardSnapshot })
         <Card className="shadow-xs">
           <CardHeader><CardTitle><h2>48-hour AI forecast</h2></CardTitle><CardDescription>Early planning summary; open the forecast page for hourly detail.</CardDescription></CardHeader>
           <CardContent className="space-y-3">
+            {snapshot.forecast.length === 0 ? <p className="rounded-xl border border-dashed p-4 text-sm leading-6 text-muted-foreground">Forecast output is intentionally withheld until the trained model service is connected. Live gateway data is already being collected for that pipeline.</p> : null}
             {snapshot.forecast.map((day) => <div className="flex items-center justify-between gap-4 rounded-xl border p-4" key={day.label}><div><p className="font-semibold">{day.label}</p><p className="text-sm text-muted-foreground">{day.condition} · {day.confidencePct}% confidence</p></div><div className="text-right"><p className="font-mono text-lg font-semibold">{day.predictedEnergyKwh.toFixed(1)} kWh</p><p className="text-xs text-muted-foreground">predicted</p></div></div>)}
             <Link className="inline-flex items-center gap-2 pt-2 text-sm font-semibold text-primary hover:underline" href="/ai-forecast">View full AI forecast <ArrowRight aria-hidden="true" className="size-4" /></Link>
           </CardContent>

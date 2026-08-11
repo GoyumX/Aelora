@@ -111,5 +111,9 @@ export function createTelemetrySnapshot(site: SimulatorSite, observedAt = new Da
       { id: "west", name: "West array", powerW: westPowerW, status: scenario === "INVERTER_FAULT" ? "OFFLINE" : "NORMAL" },
     ],
     series,
+    connectivity: {
+      gateway: { id: null, name: "Legacy seed simulator", status: "NEVER_SEEN", lastSeenAt: null, expectedIntervalSec: 30 },
+      devices: [],
+    },
   };
 }

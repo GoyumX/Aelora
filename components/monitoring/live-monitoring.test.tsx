@@ -81,7 +81,7 @@ describe("LiveMonitoring", () => {
     expect(screen.getByRole("heading", { name: "Electrical measurements" })).toBeInTheDocument();
     expect(screen.getByText("372 V")).toBeInTheDocument();
     expect(screen.getByText("50.00 Hz")).toBeInTheDocument();
-    expect(screen.getByText("East array")).toBeInTheDocument();
+    expect(screen.getAllByText("East array").length).toBeGreaterThan(0);
     expect(screen.getByRole("img", { name: /last-hour solar and household power/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Refresh telemetry" })).toBeInTheDocument();
   });

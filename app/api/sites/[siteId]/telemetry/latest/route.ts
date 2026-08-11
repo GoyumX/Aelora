@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { createTelemetrySnapshot } from "@/lib/telemetry/simulator";
+import { getLatestTelemetrySnapshot } from "@/lib/telemetry/latest-service";
 
 export async function GET(
   _request: Request,
@@ -23,7 +23,7 @@ export async function GET(
       deletedAt: null,
       ...(user.role === "ADMIN" ? {} : { ownerId: user.id }),
     },
-    select: { id: true, name: true, timezone: true, mode: true, status: true, arrays: { where: { archivedAt: null, status: "ACTIVE" }, select: { panelCount: true, ratedPowerW: true } } },
+    select: { id: true, name: true },
   });
 
   if (!site) {
@@ -33,11 +33,16 @@ export async function GET(
     );
   }
 
+  const telemetry = await getLatestTelemetrySnapshot(site);
+  if (!telemetry) {
+    return NextResponse.json(
+      { error: { code: "no_telemetry", message: "No telemetry has been received for this site yet." } },
+      { status: 404, headers: { "Cache-Control": "private, no-store" } },
+    );
+  }
+
   return NextResponse.json(
-    {
-      data: createTelemetrySnapshot({ ...site, installedCapacityW: site.arrays.reduce((sum, array) => sum + array.panelCount * array.ratedPowerW, 0) || undefined }),
-      meta: { refreshAfterSeconds: 15 },
-    },
+    { data: telemetry, meta: { refreshAfterSeconds: telemetry.connectivity.gateway.expectedIntervalSec } },
     { headers: { "Cache-Control": "private, no-store" } },
   );
 }

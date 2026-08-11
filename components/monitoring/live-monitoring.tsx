@@ -56,12 +56,13 @@ function statusTone(status: string) {
 export function LiveMonitoring({ initialTelemetry }: { initialTelemetry: TelemetrySnapshot }) {
   const endpoint = `/api/sites/${initialTelemetry.siteId}/telemetry/latest`;
   const { data, error, isValidating, mutate } = useSWR<TelemetryApiResponse>(endpoint, fetchTelemetry, {
-    fallbackData: { data: initialTelemetry, meta: { refreshAfterSeconds: 15 } },
-    refreshInterval: 15_000,
+    fallbackData: { data: initialTelemetry, meta: { refreshAfterSeconds: initialTelemetry.connectivity.gateway.expectedIntervalSec } },
+    refreshInterval: initialTelemetry.connectivity.gateway.expectedIntervalSec * 1000,
     revalidateOnFocus: true,
     revalidateOnMount: false,
   });
   const telemetry = data?.data ?? initialTelemetry;
+  const gatewayStatus = telemetry.connectivity.gateway.status;
   const maxChartValue = Math.max(6000, ...telemetry.series.flatMap((point) => [point.pvPowerW, point.loadPowerW]));
   const metrics = [
     { label: "Solar output", value: kw(telemetry.pvPowerW), detail: `${(telemetry.pvEnergyTodayWh / 1000).toFixed(1)} kWh today`, icon: SunMedium, tone: "bg-solar/15 text-solar-strong" },
@@ -84,11 +85,12 @@ export function LiveMonitoring({ initialTelemetry }: { initialTelemetry: Telemet
         <div>
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Detailed telemetry</p>
-            <Badge className="border-primary/20 bg-primary/8 text-primary" variant="outline">Simulated data</Badge>
-            <Badge className={statusTone(telemetry.deviceStatus)} variant="outline">{telemetry.deviceStatus === "NORMAL" ? "● Live & healthy" : telemetry.deviceStatus.replaceAll("_", " ")}</Badge>
+            <Badge className="border-primary/20 bg-primary/8 text-primary" variant="outline">{telemetry.source === "SIMULATOR" ? "Virtual gateway data" : "Hardware gateway data"}</Badge>
+            <Badge className={statusTone(gatewayStatus === "ONLINE" ? "NORMAL" : gatewayStatus)} variant="outline">Gateway {gatewayStatus.toLowerCase().replaceAll("_", " ")}</Badge>
+            {telemetry.deviceStatus !== "NORMAL" ? <Badge className={statusTone(telemetry.deviceStatus)} variant="outline">{telemetry.deviceStatus.replaceAll("_", " ")}</Badge> : null}
           </div>
           <h1 className="font-heading text-3xl font-semibold tracking-[-0.035em] sm:text-4xl" id="live-title">Live Monitoring</h1>
-          <p className="mt-2 text-muted-foreground">{telemetry.siteName} · canonical telemetry updates every {data?.meta.refreshAfterSeconds ?? 15} seconds</p>
+          <p className="mt-2 text-muted-foreground">{telemetry.siteName} · stored telemetry refreshes every {data?.meta.refreshAfterSeconds ?? telemetry.connectivity.gateway.expectedIntervalSec} seconds</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div aria-live="polite" className="text-sm text-muted-foreground">
@@ -101,7 +103,7 @@ export function LiveMonitoring({ initialTelemetry }: { initialTelemetry: Telemet
         </div>
       </section>
 
-      <section aria-label="Simulation scenario" className={cn("rounded-xl border px-4 py-3", statusTone(telemetry.deviceStatus))}>
+      <section aria-label="Telemetry status" className={cn("rounded-xl border px-4 py-3", statusTone(gatewayStatus === "ONLINE" ? telemetry.deviceStatus : gatewayStatus))}>
         <div className="flex items-start gap-3"><Activity aria-hidden="true" className="mt-0.5 size-5 shrink-0" /><div><p className="font-semibold">{telemetry.scenario.label}</p><p className="mt-0.5 text-sm opacity-80">{telemetry.scenario.message}</p></div></div>
       </section>
 
@@ -113,7 +115,7 @@ export function LiveMonitoring({ initialTelemetry }: { initialTelemetry: Telemet
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(21rem,.65fr)]">
         <Card className="shadow-xs">
-          <CardHeader><CardTitle><h2>Last-hour power trend</h2></CardTitle><CardDescription>Five-minute simulated samples for solar output and household demand.</CardDescription></CardHeader>
+            <CardHeader><CardTitle><h2>Recent power trend</h2></CardTitle><CardDescription>Persisted gateway samples for solar output and household demand.</CardDescription></CardHeader>
           <CardContent>
             <svg aria-label="Last-hour solar and household power" className="h-auto w-full" role="img" viewBox="0 0 600 225">
               <title>Last-hour solar and household power</title><desc>Amber line shows solar power; blue dashed line shows household demand.</desc>
@@ -140,10 +142,22 @@ export function LiveMonitoring({ initialTelemetry }: { initialTelemetry: Telemet
         </Card>
 
         <Card className="shadow-xs">
-          <CardHeader><CardTitle><h2>Array contribution</h2></CardTitle><CardDescription>Contribution and explicit state for each simulated panel array.</CardDescription></CardHeader>
+          <CardHeader><CardTitle><h2>Array contribution</h2></CardTitle><CardDescription>Contribution and explicit state reported for each panel array.</CardDescription></CardHeader>
           <CardContent className="space-y-3">{telemetry.arrays.map((array) => <div className="rounded-xl border p-4" key={array.id}><div className="flex items-center justify-between gap-4"><div><p className="font-semibold">{array.name}</p><p className="mt-1 font-mono text-lg">{kw(array.powerW)}</p></div><Badge className={statusTone(array.status)} variant="outline">{array.status.toLowerCase().replaceAll("_", " ")}</Badge></div><div className="mt-3 h-2 overflow-hidden rounded-full bg-muted"><div className={cn("h-full rounded-full", array.status === "NORMAL" ? "bg-energy" : "bg-alert-warning")} style={{ width: `${telemetry.pvPowerW ? Math.max(5, (array.powerW / telemetry.pvPowerW) * 100) : 0}%` }} /></div></div>)}</CardContent>
         </Card>
       </div>
+
+      <Card className="shadow-xs">
+        <CardHeader><CardTitle><h2>Connected equipment</h2></CardTitle><CardDescription>Communication freshness and operation are separate: an online device can still be stopped or faulted.</CardDescription></CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {telemetry.connectivity.devices.length === 0 ? <p className="text-sm text-muted-foreground">No devices have been reported by this gateway yet.</p> : telemetry.connectivity.devices.map((device) => (
+            <div className="rounded-xl border p-4" key={device.externalId}>
+              <div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{device.name}</p><p className="mt-1 text-xs text-muted-foreground">{device.kind.toLowerCase().replaceAll("_", " ")} · {device.externalId}</p></div><Badge className={statusTone(device.status === "ONLINE" ? "NORMAL" : device.status)} variant="outline">{device.status.toLowerCase().replaceAll("_", " ")}</Badge></div>
+              <p className="mt-3 text-sm">Operation: <strong>{device.operationalState.toLowerCase()}</strong></p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       <Card className="shadow-xs">
         <CardHeader><CardTitle><h2>Data quality & conventions</h2></CardTitle><CardDescription>Information needed to interpret these readings correctly.</CardDescription></CardHeader>

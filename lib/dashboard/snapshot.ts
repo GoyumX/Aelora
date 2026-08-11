@@ -1,3 +1,5 @@
+import type { EquipmentConnectivityStatus, TelemetrySnapshot } from "@/lib/telemetry/types";
+
 export type DashboardSite = {
   id: string;
   name: string;
@@ -11,6 +13,7 @@ export type DashboardSnapshot = {
   site: Omit<DashboardSite, "timezone">;
   observedAt: string;
   sourceLabel: string;
+  connectivityStatus: EquipmentConnectivityStatus;
   metrics: {
     pvPowerKw: number;
     energyTodayKwh: number;
@@ -97,6 +100,7 @@ export function createDashboardSnapshot(site: DashboardSite, observedAt = new Da
     site: { id: site.id, name: site.name, mode: site.mode, status: site.status },
     observedAt: observedAt.toISOString(),
     sourceLabel: site.mode === "SIMULATED" ? "Deterministic digital twin" : "Connected hardware adapter",
+    connectivityStatus: "NEVER_SEEN",
     metrics: {
       pvPowerKw,
       energyTodayKwh,
@@ -129,5 +133,46 @@ export function createDashboardSnapshot(site: DashboardSite, observedAt = new Da
     recommendation: gridPowerKw < 0
       ? "Use flexible appliances now while the system has a solar surplus."
       : "Schedule flexible appliances between 11:00 and 14:00 when solar generation is expected to peak.",
+  };
+}
+
+export function createDashboardSnapshotFromTelemetry(site: DashboardSite, telemetry: TelemetrySnapshot): DashboardSnapshot {
+  const gatewayStatus = telemetry.connectivity.gateway.status;
+  const intraday = telemetry.series.map((point) => ({
+    label: new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: site.timezone ?? "Asia/Colombo",
+    }).format(new Date(point.observedAt)),
+    generationKw: round(point.pvPowerW / 1000),
+    consumptionKw: round(point.loadPowerW / 1000),
+  }));
+  return {
+    site: { id: site.id, name: site.name, mode: site.mode, status: site.status },
+    observedAt: telemetry.observedAt,
+    sourceLabel: telemetry.source === "SIMULATOR" ? "Virtual gateway telemetry" : "Hardware gateway telemetry",
+    connectivityStatus: gatewayStatus,
+    metrics: {
+      pvPowerKw: round(telemetry.pvPowerW / 1000),
+      energyTodayKwh: round(telemetry.pvEnergyTodayWh / 1000),
+      loadPowerKw: round(telemetry.loadPowerW / 1000),
+      batteryPowerKw: round(telemetry.batteryPowerW / 1000),
+      batterySocPct: telemetry.batterySocPct,
+      gridPowerKw: round(telemetry.gridPowerW / 1000),
+      weather: {
+        condition: telemetry.irradianceWm2 >= 650 ? "Strong sunlight" : telemetry.irradianceWm2 >= 150 ? "Reduced sunlight" : "Low irradiance",
+        temperatureC: telemetry.panelTemperatureC,
+        irradianceWm2: telemetry.irradianceWm2,
+      },
+    },
+    intraday,
+    forecast: [],
+    alert: gatewayStatus === "ONLINE"
+      ? { severity: "INFO", title: "Gateway is reporting", detail: "Aelora is receiving and persisting current site telemetry." }
+      : { severity: "WARNING", title: `Gateway is ${gatewayStatus.toLowerCase().replaceAll("_", " ")}`, detail: "Dashboard values are the last stored reading and will not change until a new batch arrives." },
+    recommendation: gatewayStatus === "ONLINE"
+      ? "Review Live Monitoring for per-device connectivity and operating state."
+      : "Start the site gateway and confirm publishing is enabled before relying on current values.",
   };
 }

@@ -8,6 +8,7 @@ const snapshot: DashboardSnapshot = {
   site: { id: "site-demo", name: "Colombo Home", mode: "SIMULATED", status: "ACTIVE" },
   observedAt: "2026-08-07T06:30:00.000Z",
   sourceLabel: "Deterministic digital twin",
+  connectivityStatus: "ONLINE",
   metrics: {
     pvPowerKw: 4.82,
     energyTodayKwh: 18.4,
@@ -39,7 +40,8 @@ describe("DashboardOverview", () => {
     render(<DashboardOverview snapshot={snapshot} />);
 
     expect(screen.getByRole("heading", { level: 1, name: "Dashboard" })).toBeInTheDocument();
-    expect(screen.getByText("Simulation mode")).toBeInTheDocument();
+    expect(screen.getByText("Virtual gateway")).toBeInTheDocument();
+    expect(screen.getByText("● Connected")).toBeInTheDocument();
     expect(screen.getAllByText("4.82 kW").length).toBeGreaterThan(0);
     expect(screen.getByText("18.4 kWh")).toBeInTheDocument();
     expect(screen.getAllByText("76%").length).toBeGreaterThan(0);

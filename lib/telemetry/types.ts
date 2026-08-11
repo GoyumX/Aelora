@@ -9,6 +9,8 @@ export const telemetryScenarios = [
 
 export type TelemetryScenarioCode = (typeof telemetryScenarios)[number];
 export type TelemetryDeviceStatus = "NORMAL" | "CLOUD_RAMP" | "ARRAY_UNDERPERFORMING" | "GRID_OUTAGE" | "INVERTER_FAULT" | "BATTERY_FAULT";
+export type EquipmentConnectivityStatus = "NEVER_SEEN" | "ONLINE" | "STALE" | "OFFLINE";
+export type EquipmentOperationalState = "UNKNOWN" | "RUNNING" | "STANDBY" | "STOPPED" | "FAULT";
 
 export type TelemetrySnapshot = {
   siteId: string;
@@ -35,6 +37,23 @@ export type TelemetrySnapshot = {
   irradianceWm2: number;
   arrays: Array<{ id: string; name: string; powerW: number; status: "NORMAL" | "UNDERPERFORMING" | "OFFLINE" }>;
   series: Array<{ observedAt: string; pvPowerW: number; loadPowerW: number }>;
+  connectivity: {
+    gateway: {
+      id: string | null;
+      name: string;
+      status: EquipmentConnectivityStatus;
+      lastSeenAt: string | null;
+      expectedIntervalSec: number;
+    };
+    devices: Array<{
+      externalId: string;
+      name: string;
+      kind: string;
+      status: EquipmentConnectivityStatus;
+      operationalState: EquipmentOperationalState;
+      lastSeenAt: string | null;
+    }>;
+  };
 };
 
 export type TelemetryApiResponse = {

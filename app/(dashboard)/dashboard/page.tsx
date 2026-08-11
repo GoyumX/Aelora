@@ -4,8 +4,9 @@ import Link from "next/link";
 import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/session";
-import { createDashboardSnapshot } from "@/lib/dashboard/snapshot";
+import { createDashboardSnapshotFromTelemetry } from "@/lib/dashboard/snapshot";
 import { db } from "@/lib/db";
+import { getLatestTelemetrySnapshot } from "@/lib/telemetry/latest-service";
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -26,6 +27,16 @@ export default async function DashboardPage() {
     );
   }
 
-  const installedCapacityW = site.arrays.reduce((sum, array) => sum + array.panelCount * array.ratedPowerW, 0);
-  return <DashboardOverview snapshot={createDashboardSnapshot({ ...site, installedCapacityW: installedCapacityW || undefined })} />;
+  const telemetry = await getLatestTelemetrySnapshot(site);
+  if (!telemetry) {
+    return (
+      <section className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-xl flex-col items-center justify-center px-6 py-16 text-center">
+        <span className="grid size-14 place-items-center rounded-2xl bg-primary/10 text-primary"><PanelsTopLeft aria-hidden="true" className="size-7" /></span>
+        <h1 className="mt-6 font-heading text-3xl font-semibold">Waiting for gateway telemetry</h1>
+        <p className="mt-3 leading-7 text-muted-foreground">Aelora will populate this dashboard after the separate virtual or hardware gateway sends its first batch.</p>
+        <Button className="mt-7" render={<Link href="/system-configuration" />}>Set up a gateway <ArrowRight aria-hidden="true" /></Button>
+      </section>
+    );
+  }
+  return <DashboardOverview snapshot={createDashboardSnapshotFromTelemetry(site, telemetry)} />;
 }
