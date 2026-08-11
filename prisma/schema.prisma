@@ -243,30 +243,53 @@ model TelemetryReading {
 }
 
 model EdgeGateway {
-  id                  String             @id @default(cuid())
-  siteId              String
-  name                String
-  gatewayUid          String             @unique @default(uuid())
-  mode                GatewayMode
-  status              GatewayStatus      @default(PENDING)
-  credentialHash      String?            @unique
-  enrollmentTokenHash String?            @unique
-  enrollmentExpiresAt DateTime?
-  expectedIntervalSec Int                @default(30)
-  lastSequence        Int?
-  softwareVersion     String?
-  lastSeenAt          DateTime?
-  enrolledAt          DateTime?
-  revokedAt           DateTime?
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-  site                SolarSite          @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  devices             GatewayDevice[]
-  telemetryBatches    TelemetryBatch[]
-  telemetryReadings   TelemetryReading[]
+  id                         String             @id @default(cuid())
+  siteId                     String
+  name                       String
+  gatewayUid                 String             @unique @default(uuid())
+  mode                       GatewayMode
+  status                     GatewayStatus      @default(PENDING)
+  credentialHash             String?            @unique
+  pendingCredentialHash      String?            @unique
+  pendingCredentialExpiresAt DateTime?
+  credentialVersion          Int                @default(1)
+  credentialRotatedAt        DateTime?
+  enrollmentTokenHash        String?            @unique
+  enrollmentExpiresAt        DateTime?
+  expectedIntervalSec        Int                @default(30)
+  lastSequence               Int?
+  softwareVersion            String?
+  lastSeenAt                 DateTime?
+  lastHeartbeatAt            DateTime?
+  lastTelemetryAt            DateTime?
+  enrolledAt                 DateTime?
+  revokedAt                  DateTime?
+  createdAt                  DateTime           @default(now())
+  updatedAt                  DateTime           @updatedAt
+  site                       SolarSite          @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  devices                    GatewayDevice[]
+  heartbeats                 GatewayHeartbeat[]
+  telemetryBatches           TelemetryBatch[]
+  telemetryReadings          TelemetryReading[]
 
   @@index([siteId, status])
   @@index([siteId, createdAt])
+}
+
+model GatewayHeartbeat {
+  id                String      @id @default(cuid())
+  gatewayId         String
+  heartbeatId       String
+  sentAt            DateTime
+  receivedAt        DateTime    @default(now())
+  softwareVersion   String
+  publishingEnabled Boolean
+  queueDepth        Int
+  deviceCount       Int
+  gateway           EdgeGateway @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+
+  @@unique([gatewayId, heartbeatId])
+  @@index([gatewayId, receivedAt(sort: Desc)])
 }
 
 model GatewayDevice {

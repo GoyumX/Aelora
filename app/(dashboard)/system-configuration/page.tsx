@@ -1,6 +1,7 @@
 import { ArrowRight, BatteryCharging, Cable, Cpu, PanelsTopLeft, RadioTower, Settings2 } from "lucide-react";
 import Link from "next/link";
 
+import { GatewayCredentialActions } from "@/components/configuration/gateway-credential-actions";
 import { SiteConfigurationForm } from "@/components/configuration/site-configuration-form";
 import { GatewaySetup } from "@/components/configuration/gateway-setup";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +26,11 @@ export default async function SystemConfigurationPage() {
       _count: { select: { inverters: true } }, battery: { select: { enabled: true } },
       gateways: {
         where: { revokedAt: null }, orderBy: { createdAt: "desc" },
-        select: { id: true, name: true, mode: true, status: true, enrolledAt: true, lastSeenAt: true, expectedIntervalSec: true, softwareVersion: true, _count: { select: { devices: true } } },
+        select: {
+          id: true, name: true, mode: true, status: true, enrolledAt: true, lastSeenAt: true,
+          lastHeartbeatAt: true, lastTelemetryAt: true, expectedIntervalSec: true,
+          softwareVersion: true, credentialVersion: true, _count: { select: { devices: true } },
+        },
       },
     },
   });
@@ -42,7 +47,7 @@ export default async function SystemConfigurationPage() {
       <Card><CardHeader><div className="flex items-center gap-3"><RadioTower aria-hidden="true" className="size-5 text-primary" /><CardTitle>Site gateways</CardTitle></div><CardDescription>The virtual gateway runs as its own Python application. Later, the same secure ingest contract can be used by an on-site hardware gateway.</CardDescription></CardHeader><CardContent className="space-y-5">
         {site.gateways.length ? <div className="grid gap-3 md:grid-cols-2">{site.gateways.map((gateway) => {
           const status = gateway.enrolledAt ? deriveConnectivityStatus(gateway.lastSeenAt, gateway.expectedIntervalSec) : "NEVER_SEEN";
-          return <div className="rounded-xl border p-4" key={gateway.id}><div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{gateway.name}</p><p className="mt-1 text-xs text-muted-foreground">{gateway.mode.toLowerCase()} · {gateway._count.devices} devices · {gateway.expectedIntervalSec}s interval</p></div><Badge className={status === "ONLINE" ? "border-energy/25 bg-energy/10 text-energy-strong" : "border-alert-warning/30 bg-alert-warning/10 text-solar-strong"} variant="outline">{gateway.enrolledAt ? status.toLowerCase().replaceAll("_", " ") : "pending enrollment"}</Badge></div><p className="mt-3 text-xs text-muted-foreground">{gateway.lastSeenAt ? `Last packet ${gateway.lastSeenAt.toLocaleString()}` : "No packet received yet"}{gateway.softwareVersion ? ` · ${gateway.softwareVersion}` : ""}</p></div>;
+          return <div className="rounded-xl border p-4" key={gateway.id}><div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{gateway.name}</p><p className="mt-1 text-xs text-muted-foreground">{gateway.mode.toLowerCase()} · {gateway._count.devices} devices · {gateway.expectedIntervalSec}s interval · credential v{gateway.credentialVersion}</p></div><Badge className={status === "ONLINE" ? "border-energy/25 bg-energy/10 text-energy-strong" : "border-alert-warning/30 bg-alert-warning/10 text-solar-strong"} variant="outline">{gateway.enrolledAt ? status.toLowerCase().replaceAll("_", " ") : "pending enrollment"}</Badge></div><div className="mt-3 grid gap-1 text-xs text-muted-foreground"><p>{gateway.lastHeartbeatAt ? `Last heartbeat ${gateway.lastHeartbeatAt.toLocaleString()}` : "No heartbeat received yet"}</p><p>{gateway.lastTelemetryAt ? `Last telemetry ${gateway.lastTelemetryAt.toLocaleString()}` : "No telemetry received yet"}{gateway.softwareVersion ? ` · ${gateway.softwareVersion}` : ""}</p></div>{gateway.enrolledAt ? <GatewayCredentialActions gateway={{ id: gateway.id, name: gateway.name }} siteId={site.id} /> : null}</div>;
         })}</div> : <div className="flex items-start gap-3 rounded-xl border border-dashed p-4"><Cable aria-hidden="true" className="mt-0.5 size-5 text-muted-foreground" /><p className="text-sm leading-6 text-muted-foreground">Create an enrollment below, then paste its one-time token into the separately running Python virtual gateway.</p></div>}
         <GatewaySetup siteId={site.id} />
       </CardContent></Card>

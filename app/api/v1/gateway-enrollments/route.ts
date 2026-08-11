@@ -42,6 +42,7 @@ export async function POST(request: Request) {
       credential,
       expectedIntervalSec: pendingGateway.expectedIntervalSec,
       telemetryPath: `/api/v1/gateways/${pendingGateway.id}/telemetry-batches`,
+      heartbeatPath: `/api/v1/gateways/${pendingGateway.id}/heartbeats`,
       enrolledAt: enrolledAt.toISOString(),
     },
   }, { headers: { "Cache-Control": "private, no-store" } });

@@ -75,7 +75,12 @@ export function createPersistedTelemetrySnapshot(input: {
   const gatewayStatus = input.gateway
     ? deriveConnectivityStatus(input.gateway.lastSeenAt, input.gateway.expectedIntervalSec, now)
     : "NEVER_SEEN";
-  const gatewayIsFresh = gatewayStatus === "ONLINE";
+  const telemetryStatus = deriveConnectivityStatus(
+    input.reading.observedAt,
+    input.gateway?.expectedIntervalSec ?? 30,
+    now,
+  );
+  const telemetryIsFresh = gatewayStatus === "ONLINE" && telemetryStatus === "ONLINE";
   const deviceStatus = knownDeviceStatuses.has(input.reading.deviceStatus as TelemetryDeviceStatus)
     ? input.reading.deviceStatus as TelemetryDeviceStatus
     : "NORMAL";
@@ -108,9 +113,9 @@ export function createPersistedTelemetrySnapshot(input: {
     siteId: input.site.id,
     siteName: input.site.name,
     source: input.reading.source,
-    quality: gatewayIsFresh ? input.reading.quality : "STALE",
+    quality: telemetryIsFresh ? input.reading.quality : "STALE",
     observedAt: input.reading.observedAt.toISOString(),
-    scenario: gatewayIsFresh
+    scenario: telemetryIsFresh
       ? { code: "NORMAL", label: "Gateway telemetry", message: "This reading was received and stored from the connected site gateway." }
       : { code: "NORMAL", label: "Last known telemetry", message: "No fresh gateway packet has arrived. Values are preserved from the last stored reading." },
     deviceStatus,

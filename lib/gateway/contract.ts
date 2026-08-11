@@ -76,6 +76,17 @@ export const telemetryBatchSchema = z.object({
   devices: z.array(gatewayDeviceObservationSchema).min(1).max(256),
 });
 
+export const gatewayHeartbeatSchema = z.object({
+  schemaVersion: z.literal("1.0"),
+  heartbeatId: z.string().uuid(),
+  gatewayId: z.string().trim().min(1).max(120),
+  sentAt: timestamp,
+  softwareVersion: z.string().trim().min(1).max(80),
+  publishingEnabled: z.boolean(),
+  queueDepth: z.number().int().nonnegative().max(100_000),
+  deviceCount: z.number().int().nonnegative().max(256),
+});
+
 export const gatewayEnrollmentSchema = z.object({
   enrollmentToken: z.string().min(32).max(256),
   softwareVersion: z.string().trim().min(1).max(80),
@@ -83,3 +94,55 @@ export const gatewayEnrollmentSchema = z.object({
 
 export type TelemetryBatchInput = z.infer<typeof telemetryBatchSchema>;
 export type GatewayDeviceObservationInput = z.infer<typeof gatewayDeviceObservationSchema>;
+export type GatewayHeartbeatInput = z.infer<typeof gatewayHeartbeatSchema>;
+
+export type GatewayTimingIssue = {
+  code: "sent_at_too_old" | "sent_at_in_future" | "timestamp_invalid";
+  message: string;
+  path: string;
+};
+
+const maxFutureSkewSec = 2 * 60;
+const telemetryReplayWindowSec = 7 * 24 * 60 * 60;
+
+export function validateGatewayTimestamp(
+  value: string,
+  now: Date,
+  maxAgeSec: number,
+  path = "sentAt",
+): GatewayTimingIssue | null {
+  const timestampMs = new Date(value).getTime();
+  if (!Number.isFinite(timestampMs)) {
+    return { code: "timestamp_invalid", message: `${path} is not a valid timestamp.`, path };
+  }
+  if (timestampMs - now.getTime() > maxFutureSkewSec * 1000) {
+    return { code: "sent_at_in_future", message: `${path} is too far in the future.`, path };
+  }
+  if (now.getTime() - timestampMs > maxAgeSec * 1000) {
+    return { code: "sent_at_too_old", message: `${path} is outside the accepted replay window.`, path };
+  }
+  return null;
+}
+
+export function validateTelemetryTiming(
+  batch: {
+    sentAt: string;
+    siteSnapshot: { observedAt: string };
+    devices: Array<{ reportedAt: string; lastTelemetryAt?: string | null }>;
+  },
+  now: Date,
+): GatewayTimingIssue | null {
+  const timestamps = [
+    { value: batch.sentAt, path: "sentAt" },
+    { value: batch.siteSnapshot.observedAt, path: "siteSnapshot.observedAt" },
+    ...batch.devices.map((device, index) => ({ value: device.reportedAt, path: `devices.${index}.reportedAt` })),
+    ...batch.devices.flatMap((device, index) => device.lastTelemetryAt
+      ? [{ value: device.lastTelemetryAt, path: `devices.${index}.lastTelemetryAt` }]
+      : []),
+  ];
+  for (const item of timestamps) {
+    const issue = validateGatewayTimestamp(item.value, now, telemetryReplayWindowSec, item.path);
+    if (issue) return issue;
+  }
+  return null;
+}

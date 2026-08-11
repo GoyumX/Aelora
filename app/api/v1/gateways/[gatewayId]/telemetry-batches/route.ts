@@ -2,8 +2,9 @@ import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
-import { telemetryBatchSchema } from "@/lib/gateway/contract";
-import { hashGatewaySecret, readBearerToken } from "@/lib/gateway/credentials";
+import { authenticateGateway } from "@/lib/gateway/authentication";
+import { telemetryBatchSchema, validateTelemetryTiming } from "@/lib/gateway/contract";
+import { readBearerToken } from "@/lib/gateway/credentials";
 import { buildDevicePersistence, buildReadingPersistence } from "@/lib/gateway/ingestion-mapper";
 
 function unauthorized() {
@@ -21,10 +22,8 @@ export async function POST(
   if (!credential) return unauthorized();
 
   const { gatewayId } = await params;
-  const gateway = await db.edgeGateway.findFirst({
-    where: { id: gatewayId, credentialHash: hashGatewaySecret(credential), revokedAt: null },
-    select: { id: true, siteId: true, expectedIntervalSec: true },
-  });
+  const receivedAt = new Date();
+  const gateway = await authenticateGateway(gatewayId, credential, receivedAt);
   if (!gateway) return unauthorized();
 
   const parsed = telemetryBatchSchema.safeParse(await request.json().catch(() => null));
@@ -36,6 +35,16 @@ export async function POST(
   }
   if (parsed.data.gatewayId !== gateway.id) {
     return NextResponse.json({ error: { code: "gateway_mismatch", message: "Payload gatewayId does not match its credential." } }, { status: 403 });
+  }
+  if (parsed.data.source !== gateway.mode) {
+    return NextResponse.json({ error: { code: "source_mismatch", message: "Payload source does not match the enrolled gateway mode." } }, { status: 403 });
+  }
+  const timingIssue = validateTelemetryTiming(parsed.data, receivedAt);
+  if (timingIssue) {
+    return NextResponse.json(
+      { error: { code: timingIssue.code, message: timingIssue.message } },
+      { status: 422 },
+    );
   }
 
   const existing = await db.telemetryBatch.findFirst({
@@ -49,7 +58,6 @@ export async function POST(
     return NextResponse.json({ data: { batchId: existing.batchId, accepted: true, duplicate: true, receivedAt: existing.receivedAt.toISOString() } });
   }
 
-  const receivedAt = new Date();
   try {
     await db.$transaction(async (transaction) => {
       const batch = await transaction.telemetryBatch.create({
@@ -109,7 +117,12 @@ export async function POST(
       });
       await transaction.edgeGateway.update({
         where: { id: gatewayId },
-        data: { status: "ONLINE", lastSeenAt: receivedAt, lastSequence: parsed.data.sequence },
+        data: {
+          status: "ONLINE",
+          lastSeenAt: receivedAt,
+          lastTelemetryAt: receivedAt,
+          lastSequence: parsed.data.sequence,
+        },
       });
     });
   } catch (error) {
@@ -121,6 +134,12 @@ export async function POST(
 
   return NextResponse.json(
     { data: { batchId: parsed.data.batchId, accepted: true, duplicate: false, receivedAt: receivedAt.toISOString() } },
-    { status: 202, headers: { "Cache-Control": "no-store" } },
+    {
+      status: 201,
+      headers: {
+        "Cache-Control": "no-store",
+        Location: `/api/v1/gateways/${gatewayId}/telemetry-batches/${parsed.data.batchId}`,
+      },
+    },
   );
 }
