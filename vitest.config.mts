@@ -10,6 +10,13 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary"],
+      include: [
+        "components/brand/aelora-mark.tsx",
+        "components/shell/app-shell.tsx",
+        "components/shell/app-sidebar.tsx",
+        "components/shell/page-placeholder.tsx",
+        "lib/navigation.ts",
+      ],
       thresholds: {
         branches: 80,
         functions: 80,

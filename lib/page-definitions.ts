@@ -1,0 +1,15 @@
+export const pageDefinitions = {
+  dashboard: { eyebrow: "Overview", title: "Dashboard", description: "A quick view of solar health, current production, alerts, and the next 48-hour AI forecast." },
+  liveMonitoring: { eyebrow: "Monitoring", title: "Live Monitoring", description: "Inspect detailed generation, consumption, inverter, battery, and simulated device telemetry." },
+  aiForecast: { eyebrow: "Intelligence", title: "AI Forecast", description: "Explore the detailed seven-day energy forecast and the outlook for the next month." },
+  performance: { eyebrow: "System health", title: "Performance", description: "Compare panel efficiency, expected output, degradation, availability, and system losses." },
+  historicalAnalytics: { eyebrow: "Analytics", title: "Historical Analytics", description: "Investigate production trends, comparisons, weather relationships, and historical anomalies." },
+  alerts: { eyebrow: "Operations", title: "Alerts", description: "Review power cuts, panel anomalies, inverter faults, battery warnings, and alert resolution history." },
+  reports: { eyebrow: "Exports", title: "Reports", description: "Generate, schedule, and download weekly and monthly solar performance reports." },
+  systemConfiguration: { eyebrow: "Configuration", title: "System Configuration", description: "Manage the solar array, inverter, battery, site details, and data-source connections." },
+  solarPanels: { eyebrow: "System configuration", title: "Solar Panels", description: "View every registered panel, edit its specifications, or add a new panel to the system." },
+  inverter: { eyebrow: "System configuration", title: "Inverter Settings", description: "Configure inverter specifications, operating limits, and telemetry connection details." },
+  battery: { eyebrow: "System configuration", title: "Battery Settings", description: "Configure capacity, charge thresholds, reserve policy, and battery telemetry details." },
+  settings: { eyebrow: "Preferences", title: "Settings", description: "Manage your profile, regional preferences, notifications, and light or dark appearance." },
+  help: { eyebrow: "Support", title: "Help & Support", description: "Find setup guidance, feature walkthroughs, frequently asked questions, and support options." },
+} as const;

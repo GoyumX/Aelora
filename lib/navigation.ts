@@ -64,7 +64,7 @@ export const appNavigation: NavigationGroup[] = [
           {
             label: "Inverter",
             href: "/system-configuration/inverter",
-      icon: PlugZap,
+            icon: PlugZap,
           },
           {
             label: "Battery",
