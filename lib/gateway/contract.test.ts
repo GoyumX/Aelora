@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { telemetryBatchSchema } from "@/lib/gateway/contract";
+import {
+  gatewayHeartbeatSchema,
+  telemetryBatchSchema,
+  validateGatewayTimestamp,
+  validateTelemetryTiming,
+} from "@/lib/gateway/contract";
 import { deriveConnectivityStatus } from "@/lib/gateway/status";
 
 const sentAt = "2026-08-11T10:30:00.000Z";
@@ -89,6 +94,42 @@ describe("gateway telemetry contract", () => {
 
     expect(result.devices[0].connectivityStatus).toBe("ONLINE");
     expect(result.devices[0].operationalState).toBe("STOPPED");
+  });
+
+  it("rejects buffered telemetry outside the bounded replay window", () => {
+    expect(validateTelemetryTiming(validBatch, new Date("2026-08-19T10:30:01.000Z"))).toMatchObject({
+      code: "sent_at_too_old",
+    });
+    expect(validateTelemetryTiming(validBatch, new Date("2026-08-11T10:27:59.000Z"))).toMatchObject({
+      code: "sent_at_in_future",
+    });
+    expect(validateTelemetryTiming(validBatch, new Date("2026-08-11T10:30:01.000Z"))).toBeNull();
+  });
+});
+
+describe("gateway heartbeat contract", () => {
+  const heartbeat = {
+    schemaVersion: "1.0",
+    heartbeatId: "52bcdd2b-cc48-4677-aac4-f987789724f5",
+    gatewayId: "gateway_demo",
+    sentAt,
+    softwareVersion: "0.2.0",
+    publishingEnabled: false,
+    queueDepth: 3,
+    deviceCount: 7,
+  };
+
+  it("accepts gateway health independently from telemetry publishing", () => {
+    expect(gatewayHeartbeatSchema.parse(heartbeat)).toMatchObject({
+      publishingEnabled: false,
+      queueDepth: 3,
+    });
+  });
+
+  it("limits heartbeat clock skew", () => {
+    expect(validateGatewayTimestamp(sentAt, new Date("2026-08-11T10:34:59.000Z"), 5 * 60)).toBeNull();
+    expect(validateGatewayTimestamp(sentAt, new Date("2026-08-11T10:35:01.000Z"), 5 * 60)?.code).toBe("sent_at_too_old");
+    expect(validateGatewayTimestamp(sentAt, new Date("2026-08-11T10:27:59.000Z"), 5 * 60)?.code).toBe("sent_at_in_future");
   });
 });
 

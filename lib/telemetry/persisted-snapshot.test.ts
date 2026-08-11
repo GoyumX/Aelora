@@ -76,6 +76,26 @@ describe("persisted telemetry snapshot", () => {
     expect(result.quality).toBe("STALE");
   });
 
+  it("keeps a heartbeat-only gateway online while marking its old telemetry stale", () => {
+    const result = createPersistedTelemetrySnapshot({
+      site: { id: "site-1", name: "Colombo Home" },
+      reading: { ...reading, observedAt: new Date("2026-08-11T10:20:00.000Z") },
+      recentReadings: [],
+      gateway: {
+        id: "gateway-1",
+        name: "Virtual plant",
+        lastSeenAt: new Date("2026-08-11T10:30:15.000Z"),
+        expectedIntervalSec: 30,
+        devices: [],
+      },
+      now: new Date("2026-08-11T10:30:30.000Z"),
+    });
+
+    expect(result.connectivity.gateway.status).toBe("ONLINE");
+    expect(result.quality).toBe("STALE");
+    expect(result.scenario.label).toBe("Last known telemetry");
+  });
+
   it("handles a site with no enrolled gateway without inventing devices or array power", () => {
     const result = createPersistedTelemetrySnapshot({
       site: { id: "site-1", name: "Colombo Home" },
