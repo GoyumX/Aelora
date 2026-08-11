@@ -59,6 +59,49 @@ enum TelemetryQuality {
   MISSING
 }
 
+enum GatewayMode {
+  VIRTUAL
+  HARDWARE
+}
+
+enum GatewayStatus {
+  PENDING
+  ONLINE
+  DEGRADED
+  STALE
+  OFFLINE
+  REVOKED
+}
+
+enum GatewayDeviceKind {
+  PV_ARRAY
+  INVERTER
+  BATTERY
+  GRID_METER
+  LOAD_METER
+  WEATHER_SENSOR
+}
+
+enum DeviceConnectivityStatus {
+  NEVER_SEEN
+  ONLINE
+  STALE
+  OFFLINE
+}
+
+enum DeviceOperationalState {
+  UNKNOWN
+  RUNNING
+  STANDBY
+  STOPPED
+  FAULT
+}
+
+enum TelemetryBatchStatus {
+  ACCEPTED
+  REJECTED
+}
+
 model User {
   id            String          @id @default(cuid())
   name          String
@@ -142,55 +185,148 @@ model UserPreference {
 }
 
 model SolarSite {
-  id        String     @id @default(cuid())
+  id        String             @id @default(cuid())
   ownerId   String
   name      String
-  slug      String     @unique
+  slug      String             @unique
   latitude  Float
   longitude Float
-  timezone  String     @default("Asia/Colombo")
-  mode      SiteMode   @default(SIMULATED)
-  status    SiteStatus @default(ACTIVE)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  timezone  String             @default("Asia/Colombo")
+  mode      SiteMode           @default(SIMULATED)
+  status    SiteStatus         @default(ACTIVE)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
   deletedAt DateTime?
-  owner     User       @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  owner     User               @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   arrays    SolarArray[]
   inverters Inverter[]
   battery   Battery?
   telemetry TelemetryReading[]
+  gateways  EdgeGateway[]
 
   @@index([ownerId, status])
   @@index([ownerId, createdAt])
 }
 
 model TelemetryReading {
-  id                       String           @id @default(cuid())
-  siteId                   String
-  observedAt               DateTime
-  source                   TelemetrySource
-  quality                  TelemetryQuality
-  pvPowerW                 Int
-  pvEnergyTodayWh          Int
-  loadPowerW               Int
-  gridPowerW               Int
-  batteryPowerW            Int
-  batterySocPct            Int
-  dcVoltageV               Float
-  dcCurrentA               Float
-  acVoltageV               Float
-  acCurrentA               Float
-  gridVoltageV             Float
-  frequencyHz              Float
-  inverterTemperatureC     Float
-  panelTemperatureC        Float
-  irradianceWm2            Int
-  deviceStatus             String
-  createdAt                DateTime         @default(now())
-  site                     SolarSite        @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  id                   String           @id @default(cuid())
+  siteId               String
+  gatewayId            String?
+  telemetryBatchId     String?          @unique
+  observedAt           DateTime
+  source               TelemetrySource
+  quality              TelemetryQuality
+  pvPowerW             Int
+  pvEnergyTodayWh      Int
+  loadPowerW           Int
+  gridPowerW           Int
+  batteryPowerW        Int
+  batterySocPct        Int
+  dcVoltageV           Float
+  dcCurrentA           Float
+  acVoltageV           Float
+  acCurrentA           Float
+  gridVoltageV         Float
+  frequencyHz          Float
+  inverterTemperatureC Float
+  panelTemperatureC    Float
+  irradianceWm2        Int
+  deviceStatus         String
+  createdAt            DateTime         @default(now())
+  site                 SolarSite        @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  gateway              EdgeGateway?     @relation(fields: [gatewayId], references: [id], onDelete: SetNull)
+  telemetryBatch       TelemetryBatch?  @relation(fields: [telemetryBatchId], references: [id], onDelete: SetNull)
 
   @@unique([siteId, source, observedAt])
   @@index([siteId, observedAt(sort: Desc)])
+  @@index([gatewayId, observedAt(sort: Desc)])
+}
+
+model EdgeGateway {
+  id                  String             @id @default(cuid())
+  siteId              String
+  name                String
+  gatewayUid          String             @unique @default(uuid())
+  mode                GatewayMode
+  status              GatewayStatus      @default(PENDING)
+  credentialHash      String?            @unique
+  enrollmentTokenHash String?            @unique
+  enrollmentExpiresAt DateTime?
+  expectedIntervalSec Int                @default(30)
+  lastSequence        Int?
+  softwareVersion     String?
+  lastSeenAt          DateTime?
+  enrolledAt          DateTime?
+  revokedAt           DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  site                SolarSite          @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  devices             GatewayDevice[]
+  telemetryBatches    TelemetryBatch[]
+  telemetryReadings   TelemetryReading[]
+
+  @@index([siteId, status])
+  @@index([siteId, createdAt])
+}
+
+model GatewayDevice {
+  id                  String                   @id @default(cuid())
+  gatewayId           String
+  externalId          String
+  kind                GatewayDeviceKind
+  name                String
+  manufacturer        String?
+  model               String?
+  serialNumber        String?
+  connectivityStatus  DeviceConnectivityStatus @default(NEVER_SEEN)
+  operationalState    DeviceOperationalState   @default(UNKNOWN)
+  expectedIntervalSec Int                      @default(30)
+  lastSeenAt          DateTime?
+  metrics             Json?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+  gateway             EdgeGateway              @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+  observations        DeviceObservation[]
+
+  @@unique([gatewayId, externalId])
+  @@index([gatewayId, connectivityStatus])
+  @@index([serialNumber])
+}
+
+model TelemetryBatch {
+  id           String               @id @default(cuid())
+  gatewayId    String
+  batchId      String
+  sequence     Int
+  sentAt       DateTime
+  receivedAt   DateTime             @default(now())
+  source       GatewayMode
+  status       TelemetryBatchStatus @default(ACCEPTED)
+  gateway      EdgeGateway          @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+  observations DeviceObservation[]
+  reading      TelemetryReading?
+
+  @@unique([gatewayId, batchId])
+  @@unique([gatewayId, sequence])
+  @@index([gatewayId, receivedAt(sort: Desc)])
+}
+
+model DeviceObservation {
+  id                 String                   @id @default(cuid())
+  telemetryBatchId   String
+  deviceId           String
+  reportedAt         DateTime
+  lastTelemetryAt    DateTime?
+  quality            TelemetryQuality
+  connectivityStatus DeviceConnectivityStatus
+  operationalState   DeviceOperationalState
+  metrics            Json
+  createdAt          DateTime                 @default(now())
+  telemetryBatch     TelemetryBatch           @relation(fields: [telemetryBatchId], references: [id], onDelete: Cascade)
+  device             GatewayDevice            @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@unique([telemetryBatchId, deviceId])
+  @@index([deviceId, reportedAt(sort: Desc)])
 }
 
 model SolarArray {
