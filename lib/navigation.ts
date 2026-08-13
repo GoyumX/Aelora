@@ -12,8 +12,11 @@ import {
   PanelsTopLeft,
   Settings,
   Settings2,
+  ShieldCheck,
   Sparkles,
 } from "lucide-react";
+
+import type { UserRole } from "@/lib/auth/authorization";
 
 export type NavigationItem = {
   label: string;
@@ -78,6 +81,17 @@ export const appNavigation: NavigationGroup[] = [
     ],
   },
 ];
+
+const adminNavigation: NavigationGroup = {
+  label: "Administration",
+  items: [
+    { label: "Admin Console", href: "/admin", icon: ShieldCheck },
+  ],
+};
+
+export function getNavigationForRole(role: UserRole): NavigationGroup[] {
+  return role === "ADMIN" ? [...appNavigation, adminNavigation] : appNavigation;
+}
 
 export function getNavigationItems(
   groups: NavigationGroup[],
