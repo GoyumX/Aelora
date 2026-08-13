@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   appNavigation,
   findNavigationItem,
+  getNavigationForRole,
   getNavigationItems,
 } from "@/lib/navigation";
 
@@ -33,6 +34,20 @@ describe("appNavigation", () => {
   });
 });
 
+describe("role-aware navigation", () => {
+  it("shows administration only to administrators", () => {
+    const userLabels = getNavigationItems(getNavigationForRole("USER")).map(
+      (item) => item.label,
+    );
+    const adminLabels = getNavigationItems(getNavigationForRole("ADMIN")).map(
+      (item) => item.label,
+    );
+
+    expect(userLabels).not.toContain("Admin Console");
+    expect(adminLabels).toContain("Admin Console");
+  });
+});
+
 describe("findNavigationItem", () => {
   it("selects the most specific matching route", () => {
     expect(
@@ -47,4 +62,3 @@ describe("findNavigationItem", () => {
     expect(findNavigationItem("/", appNavigation)).toBeUndefined();
   });
 });
-
