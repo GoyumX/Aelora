@@ -5,7 +5,7 @@ import { AppHeader } from "@/components/shell/app-header";
 
 describe("AppHeader", () => {
   it("labels the site selector and icon-only controls", () => {
-    render(<AppHeader />);
+    render(<AppHeader siteName="Kandy Array" user={{ name: "Nimal Silva", email: "nimal@example.com" }} />);
 
     expect(
       screen.getByRole("button", { name: "Select solar site" }),
@@ -19,5 +19,7 @@ describe("AppHeader", () => {
     expect(
       screen.getByRole("button", { name: "Open user menu" }),
     ).toBeInTheDocument();
+    expect(screen.getAllByText("Nimal Silva").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Kandy Array").length).toBeGreaterThan(0);
   });
 });

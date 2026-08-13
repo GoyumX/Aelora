@@ -34,5 +34,12 @@ describe("AppSidebar", () => {
       screen.getByRole("link", { name: "Help & Support" }),
     ).toHaveAttribute("href", "/help");
   });
-});
 
+  it("shows administration navigation only for the admin role", () => {
+    const { rerender } = render(<AppSidebar role="USER" />);
+    expect(screen.queryByRole("link", { name: "Admin Console" })).not.toBeInTheDocument();
+
+    rerender(<AppSidebar role="ADMIN" />);
+    expect(screen.getByRole("link", { name: "Admin Console" })).toHaveAttribute("href", "/admin");
+  });
+});
