@@ -12,7 +12,7 @@ Aelora's monitoring UI consumes one telemetry shape regardless of whether data c
 
 ## Source and quality
 
-`source` identifies the adapter (`SIMULATOR` or `HARDWARE`). `quality` identifies how the value should be interpreted (`SIMULATED`, `MEASURED`, `ESTIMATED`, `STALE`, or `MISSING`). Virtual-gateway readings use `SIMULATOR`/`SIMULATED`; fixture-backed and future physical adapters use `HARDWARE`/`MEASURED`. The interface must never present simulated data as a physical reading.
+The machine envelope identifies a gateway as `VIRTUAL` or `HARDWARE`. On persistence, Aelora maps that to the canonical reading source `SIMULATOR` or `HARDWARE`. `quality` identifies how the value should be interpreted (`SIMULATED`, `MEASURED`, `ESTIMATED`, `STALE`, or `MISSING`). Virtual-gateway readings therefore persist as `SIMULATOR`/`SIMULATED`; fixture-backed and future physical adapters persist as `HARDWARE`/`MEASURED`. The interface must never present simulated data as a physical reading.
 
 ## Machine endpoints
 
@@ -55,12 +55,26 @@ The endpoint requires a valid session and scopes regular users to sites they own
 ## Virtual gateway scenarios
 
 - Cloud ramp
+- Passing clouds
 - Rain day
 - Dirty array
 - Partial shade
+- Household load spike
+- Household load drop
+- Inverter clipping
 - Inverter fault
+- Inverter communications loss
 - Battery low
+- Battery drain window
+- Grid voltage sag
 - Grid outage
+- Night preview
+
+The virtual gateway follows the host computer's local date, time, and timezone by default. Manual time-of-day is a preview mode rather than the normal clock source. For each publishing interval, a stable seed and interval number produce bounded cloud, household-load, grid-voltage, and grid-frequency variation. Repeating the same seed and timestamp produces the same values, while adjacent intervals normally differ.
+
+The operator can choose fixed household demand or a minimum/maximum range, configure cloud variability, and set battery capacity, current SoC, reserve/target limits, and maximum charge/discharge power. Battery capacity governs the percentage change caused by energy flow. Grid voltage and frequency vary around operator-defined nominal values, but grid power is never invented independently: it remains `load - pv - battery`, preserving the canonical balance.
+
+The outbound schema, authentication, replay protection, and Aelora ingest endpoint are unchanged by these simulator controls.
 
 The separately running gateway applies scenarios for a caller-selected duration and restores the previous plant state automatically. Scenario expiry is also checked by the heartbeat loop, so restoration still happens when telemetry publishing is paused.
 

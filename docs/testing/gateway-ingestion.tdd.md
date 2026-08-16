@@ -15,6 +15,7 @@ Journeys were derived from the gateway-first revision in `AELORA_IMPLEMENTATION_
 - Gateway heartbeat freshness and telemetry freshness remain separate, so paused measurements do not falsely mark a running gateway offline.
 - An owner/admin can stage a new credential without interrupting the active gateway, promote it on first use, or revoke the gateway immediately.
 - Heartbeat and telemetry timestamps are bounded against future skew and stale replay windows.
+- Dynamic virtual telemetry uses the unchanged authenticated gateway contract and remains power-balanced before persistence.
 
 ## RED/GREEN checkpoints
 
@@ -37,6 +38,16 @@ The local Python gateway was enrolled through the authenticated Aelora site endp
 - gateway status `ONLINE`;
 - accepted heartbeat records and telemetry batches;
 - linked gateway telemetry readings and seven discovered virtual devices.
+
+On 2026-08-16, gateway `0.3.0` was restarted against the existing local enrollment and its new dynamic batch was accepted with HTTP `201`. The gateway and computer local timestamps matched to the second, the pending queue remained at zero, the authorization preview remained redacted, and the accepted snapshot had `0.00 W` balance error. Across an adjacent 30-second interval, observed values changed as follows:
+
+| Measurement | First interval | Next interval |
+| --- | ---: | ---: |
+| Household load | 2774.17 W | 2882.96 W |
+| PV output | 3757.45 W | 3437.35 W |
+| Grid flow | -983.28 W | -554.39 W |
+
+`npm run test:run -- lib/gateway/contract.test.ts --reporter=verbose` also passed all 7 Next.js gateway contract tests, confirming the simulator enhancement required no ingest-contract change.
 
 ## Final gates
 
