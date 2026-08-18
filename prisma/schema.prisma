@@ -1,0 +1,416 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum ThemePreference {
+  SYSTEM
+  LIGHT
+  DARK
+}
+
+enum MeasurementSystem {
+  METRIC
+  IMPERIAL
+}
+
+enum SiteMode {
+  SIMULATED
+  HARDWARE
+}
+
+enum SiteStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+}
+
+enum EquipmentStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+  ARCHIVED
+}
+
+enum TelemetrySource {
+  SIMULATOR
+  HARDWARE
+}
+
+enum TelemetryQuality {
+  SIMULATED
+  MEASURED
+  ESTIMATED
+  STALE
+  MISSING
+}
+
+enum GatewayMode {
+  VIRTUAL
+  HARDWARE
+}
+
+enum GatewayStatus {
+  PENDING
+  ONLINE
+  DEGRADED
+  STALE
+  OFFLINE
+  REVOKED
+}
+
+enum GatewayDeviceKind {
+  PV_ARRAY
+  INVERTER
+  BATTERY
+  GRID_METER
+  LOAD_METER
+  WEATHER_SENSOR
+}
+
+enum DeviceConnectivityStatus {
+  NEVER_SEEN
+  ONLINE
+  STALE
+  OFFLINE
+}
+
+enum DeviceOperationalState {
+  UNKNOWN
+  RUNNING
+  STANDBY
+  STOPPED
+  FAULT
+}
+
+enum TelemetryBatchStatus {
+  ACCEPTED
+  REJECTED
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String
+  email         String          @unique
+  emailVerified Boolean         @default(false)
+  image         String?
+  role          UserRole        @default(USER)
+  status        UserStatus      @default(ACTIVE)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  deletedAt     DateTime?
+  accounts      Account[]
+  sessions      Session[]
+  preference    UserPreference?
+  ownedSites    SolarSite[]
+
+  @@index([status, createdAt])
+  @@index([deletedAt, createdAt])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@index([expiresAt])
+}
+
+model UserPreference {
+  id                 String            @id @default(cuid())
+  userId             String            @unique
+  theme              ThemePreference   @default(SYSTEM)
+  timezone           String            @default("Asia/Colombo")
+  measurementSystem  MeasurementSystem @default(METRIC)
+  emailNotifications Boolean           @default(true)
+  defaultSiteId      String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([defaultSiteId])
+}
+
+model SolarSite {
+  id        String             @id @default(cuid())
+  ownerId   String
+  name      String
+  slug      String             @unique
+  latitude  Float
+  longitude Float
+  timezone  String             @default("Asia/Colombo")
+  mode      SiteMode           @default(SIMULATED)
+  status    SiteStatus         @default(ACTIVE)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  deletedAt DateTime?
+  owner     User               @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  arrays    SolarArray[]
+  inverters Inverter[]
+  battery   Battery?
+  telemetry TelemetryReading[]
+  gateways  EdgeGateway[]
+
+  @@index([ownerId, status])
+  @@index([ownerId, createdAt])
+}
+
+model TelemetryReading {
+  id                   String           @id @default(cuid())
+  siteId               String
+  gatewayId            String?
+  telemetryBatchId     String?          @unique
+  observedAt           DateTime
+  source               TelemetrySource
+  quality              TelemetryQuality
+  pvPowerW             Int
+  pvEnergyTodayWh      Int
+  loadPowerW           Int
+  gridPowerW           Int
+  batteryPowerW        Int
+  batterySocPct        Int
+  dcVoltageV           Float
+  dcCurrentA           Float
+  acVoltageV           Float
+  acCurrentA           Float
+  gridVoltageV         Float
+  frequencyHz          Float
+  inverterTemperatureC Float
+  panelTemperatureC    Float
+  irradianceWm2        Int
+  deviceStatus         String
+  createdAt            DateTime         @default(now())
+  site                 SolarSite        @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  gateway              EdgeGateway?     @relation(fields: [gatewayId], references: [id], onDelete: SetNull)
+  telemetryBatch       TelemetryBatch?  @relation(fields: [telemetryBatchId], references: [id], onDelete: SetNull)
+
+  @@unique([siteId, source, observedAt])
+  @@index([siteId, observedAt(sort: Desc)])
+  @@index([gatewayId, observedAt(sort: Desc)])
+}
+
+model EdgeGateway {
+  id                         String             @id @default(cuid())
+  siteId                     String
+  name                       String
+  gatewayUid                 String             @unique @default(uuid())
+  mode                       GatewayMode
+  status                     GatewayStatus      @default(PENDING)
+  credentialHash             String?            @unique
+  pendingCredentialHash      String?            @unique
+  pendingCredentialExpiresAt DateTime?
+  credentialVersion          Int                @default(1)
+  credentialRotatedAt        DateTime?
+  enrollmentTokenHash        String?            @unique
+  enrollmentExpiresAt        DateTime?
+  expectedIntervalSec        Int                @default(30)
+  lastSequence               Int?
+  softwareVersion            String?
+  lastSeenAt                 DateTime?
+  lastHeartbeatAt            DateTime?
+  lastTelemetryAt            DateTime?
+  enrolledAt                 DateTime?
+  revokedAt                  DateTime?
+  createdAt                  DateTime           @default(now())
+  updatedAt                  DateTime           @updatedAt
+  site                       SolarSite          @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  devices                    GatewayDevice[]
+  heartbeats                 GatewayHeartbeat[]
+  telemetryBatches           TelemetryBatch[]
+  telemetryReadings          TelemetryReading[]
+
+  @@index([siteId, status])
+  @@index([siteId, createdAt])
+}
+
+model GatewayHeartbeat {
+  id                String      @id @default(cuid())
+  gatewayId         String
+  heartbeatId       String
+  sentAt            DateTime
+  receivedAt        DateTime    @default(now())
+  softwareVersion   String
+  publishingEnabled Boolean
+  queueDepth        Int
+  deviceCount       Int
+  gateway           EdgeGateway @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+
+  @@unique([gatewayId, heartbeatId])
+  @@index([gatewayId, receivedAt(sort: Desc)])
+}
+
+model GatewayDevice {
+  id                  String                   @id @default(cuid())
+  gatewayId           String
+  externalId          String
+  kind                GatewayDeviceKind
+  name                String
+  manufacturer        String?
+  model               String?
+  serialNumber        String?
+  connectivityStatus  DeviceConnectivityStatus @default(NEVER_SEEN)
+  operationalState    DeviceOperationalState   @default(UNKNOWN)
+  expectedIntervalSec Int                      @default(30)
+  lastSeenAt          DateTime?
+  metrics             Json?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+  gateway             EdgeGateway              @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+  observations        DeviceObservation[]
+
+  @@unique([gatewayId, externalId])
+  @@index([gatewayId, connectivityStatus])
+  @@index([serialNumber])
+}
+
+model TelemetryBatch {
+  id           String               @id @default(cuid())
+  gatewayId    String
+  batchId      String
+  sequence     Int
+  sentAt       DateTime
+  receivedAt   DateTime             @default(now())
+  source       GatewayMode
+  status       TelemetryBatchStatus @default(ACCEPTED)
+  gateway      EdgeGateway          @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+  observations DeviceObservation[]
+  reading      TelemetryReading?
+
+  @@unique([gatewayId, batchId])
+  @@unique([gatewayId, sequence])
+  @@index([gatewayId, receivedAt(sort: Desc)])
+}
+
+model DeviceObservation {
+  id                 String                   @id @default(cuid())
+  telemetryBatchId   String
+  deviceId           String
+  reportedAt         DateTime
+  lastTelemetryAt    DateTime?
+  quality            TelemetryQuality
+  connectivityStatus DeviceConnectivityStatus
+  operationalState   DeviceOperationalState
+  metrics            Json
+  createdAt          DateTime                 @default(now())
+  telemetryBatch     TelemetryBatch           @relation(fields: [telemetryBatchId], references: [id], onDelete: Cascade)
+  device             GatewayDevice            @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@unique([telemetryBatchId, deviceId])
+  @@index([deviceId, reportedAt(sort: Desc)])
+}
+
+model SolarArray {
+  id                         String          @id @default(cuid())
+  siteId                     String
+  name                       String
+  manufacturer               String?
+  model                      String?
+  panelCount                 Int
+  ratedPowerW                Int
+  tiltDeg                    Float
+  azimuthDeg                 Float
+  installationDate           DateTime?
+  temperatureCoefficientPctC Float?
+  status                     EquipmentStatus @default(ACTIVE)
+  createdAt                  DateTime        @default(now())
+  updatedAt                  DateTime        @updatedAt
+  archivedAt                 DateTime?
+  site                       SolarSite       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, name])
+  @@index([siteId, status])
+}
+
+model Inverter {
+  id                   String          @id @default(cuid())
+  siteId               String
+  manufacturer         String
+  model                String
+  serialAlias          String?
+  acRatingW            Int
+  efficiencyPct        Float
+  phase                Int             @default(1)
+  communicationAdapter String          @default("SIMULATOR")
+  pollingIntervalSec   Int             @default(15)
+  status               EquipmentStatus @default(ACTIVE)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  archivedAt           DateTime?
+  site                 SolarSite       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId, status])
+}
+
+model Battery {
+  id                     String          @id @default(cuid())
+  siteId                 String          @unique
+  enabled                Boolean         @default(true)
+  manufacturer           String?
+  model                  String?
+  usableCapacityWh       Int
+  maxChargePowerW        Int
+  maxDischargePowerW     Int
+  minSocPct              Int             @default(10)
+  maxSocPct              Int             @default(95)
+  roundTripEfficiencyPct Float
+  reservePct             Int             @default(20)
+  status                 EquipmentStatus @default(ACTIVE)
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  site                   SolarSite       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId, status])
+}

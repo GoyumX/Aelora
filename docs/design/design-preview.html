@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Aelora design preview</title>
+  <style>
+    :root{font-family:Inter,ui-sans-serif,system-ui,sans-serif;color:#163a3a;background:#f3faf7}*{box-sizing:border-box}body{margin:0;padding:48px}main{max-width:1100px;margin:auto}.eyebrow{color:#08726e;font-size:12px;font-weight:750;letter-spacing:.16em;text-transform:uppercase}h1{font-size:42px;letter-spacing:-.04em;margin:8px 0}p{color:#55716f;line-height:1.6}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:30px 0}.swatch,.panel{background:white;border:1px solid #d5e5df;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px #0b4b4220}.color{height:90px}.meta{padding:14px}.meta strong,.meta small{display:block}.meta small{color:#65807e;margin-top:5px}.components{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:24px}.button,.badge{border:0;border-radius:10px;font-weight:700}.button{background:#08726e;color:white;padding:12px 18px}.badge{padding:7px 10px;font-size:12px}.ok{background:#d9f6e5;color:#16643b}.warn{background:#fff0c2;color:#6d4500}.critical{background:#ffe1dd;color:#9d261c}.dark{background:#102d2e;color:#effbf6;padding:28px}.dark p{color:#a9c5be}.dark .panel{background:#173738;border-color:#315252;color:#effbf6}
+  </style>
+</head>
+<body>
+  <main>
+    <span class="eyebrow">Design system · foundation</span>
+    <h1>Aelora is calm energy intelligence.</h1>
+    <p>A focused palette distinguishes measured generation, healthy energy flow, model forecasts, and operational exceptions.</p>
+    <section class="grid" aria-label="Semantic colors">
+      <div class="swatch"><div class="color" style="background:#08726e"></div><div class="meta"><strong>Primary</strong><small>Brand and actions</small></div></div>
+      <div class="swatch"><div class="color" style="background:#e9ab2f"></div><div class="meta"><strong>Solar</strong><small>Generation</small></div></div>
+      <div class="swatch"><div class="color" style="background:#35a966"></div><div class="meta"><strong>Energy</strong><small>Healthy flow</small></div></div>
+      <div class="swatch"><div class="color" style="background:#697ad4"></div><div class="meta"><strong>Forecast</strong><small>AI output</small></div></div>
+      <div class="swatch"><div class="color" style="background:#c74131"></div><div class="meta"><strong>Critical</strong><small>Fault or outage</small></div></div>
+    </section>
+    <section class="panel components" aria-label="Component examples">
+      <button class="button">View dashboard</button><span class="badge ok">● System healthy</span><span class="badge warn">▲ Review output</span><span class="badge critical">× Inverter fault</span>
+    </section>
+    <section class="dark"><span class="eyebrow" style="color:#78dcc7">Dark theme</span><h2>Monitoring that remains legible after sunset.</h2><div class="panel components"><button class="button" style="background:#78dcc7;color:#102d2e">Open forecast</button><p>6.4 kW live output · 92% confidence</p></div></section>
+  </main>
+</body>
+</html>
