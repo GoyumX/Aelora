@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   findSite: vi.fn(),
+  findSites: vi.fn(),
   findReadings: vi.fn(),
   findStoredIntervals: vi.fn(),
   upsertInterval: vi.fn(),
@@ -12,14 +13,14 @@ const mocks = vi.hoisted(() => ({
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/db", () => ({
   db: {
-    solarSite: { findUnique: mocks.findSite },
+    solarSite: { findUnique: mocks.findSite, findMany: mocks.findSites },
     telemetryReading: { findMany: mocks.findReadings },
     telemetryRollup15Minute: { findMany: mocks.findStoredIntervals },
     $transaction: mocks.transaction,
   },
 }));
 
-import { reconcileSiteRollups, rollupSiteRange } from "@/lib/telemetry/rollup-service";
+import { reconcileSiteRollups, rollupSiteRange, runIncrementalTelemetryRollups } from "@/lib/telemetry/rollup-service";
 
 const from = new Date("2026-08-01T18:30:00.000Z");
 const to = new Date("2026-08-02T18:30:00.000Z");
@@ -93,6 +94,19 @@ describe("telemetry roll-up persistence", () => {
       expectedIntervalCount: 1,
       storedIntervalCount: 1,
       differences: [],
+    });
+  });
+
+  it("runs every active site independently so one failure does not stop the scheduler", async () => {
+    mocks.findSites.mockResolvedValue([{ id: "site-1" }, { id: "missing" }]);
+    mocks.findSite.mockResolvedValueOnce({ id: "site-1", timezone: "Asia/Colombo", gateways: [{ expectedIntervalSec: 30 }] }).mockResolvedValueOnce(null);
+    mocks.findReadings.mockResolvedValue([]);
+
+    await expect(runIncrementalTelemetryRollups(new Date("2026-08-26T06:30:00.000Z"))).resolves.toMatchObject({
+      attempted: 2,
+      completed: 1,
+      failed: 1,
+      results: [expect.objectContaining({ siteId: "site-1", status: "COMPLETED" }), expect.objectContaining({ siteId: "missing", status: "FAILED" })],
     });
   });
 });
