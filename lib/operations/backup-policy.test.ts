@@ -66,6 +66,7 @@ describe("retention readiness", () => {
     expect(evaluateRetentionReadiness({
       now,
       backupEvidence: { passed: true, verifiedAt: "2026-08-25T12:00:00.000Z" },
+      rollupEvidence: { passed: true, verifiedAt: "2026-08-26T11:00:00.000Z" },
       existingTables: ["TelemetryRollup15Minute"],
     })).toEqual({
       allowed: false,
@@ -74,15 +75,17 @@ describe("retention readiness", () => {
   });
 
   it("blocks failed, missing, or stale restore evidence", () => {
-    expect(evaluateRetentionReadiness({ now, backupEvidence: null, existingTables: [] }).allowed).toBe(false);
+    expect(evaluateRetentionReadiness({ now, backupEvidence: null, rollupEvidence: null, existingTables: [] }).allowed).toBe(false);
     expect(evaluateRetentionReadiness({
       now,
       backupEvidence: { passed: false, verifiedAt: "2026-08-26T11:00:00.000Z" },
+      rollupEvidence: { passed: true, verifiedAt: "2026-08-26T11:00:00.000Z" },
       existingTables: ["TelemetryRollup15Minute", "TelemetryRollupDaily"],
     }).reasons).toContain("The latest backup restore verification did not pass.");
     expect(evaluateRetentionReadiness({
       now,
       backupEvidence: { passed: true, verifiedAt: "2026-08-10T12:00:00.000Z" },
+      rollupEvidence: { passed: true, verifiedAt: "2026-08-26T11:00:00.000Z" },
       existingTables: ["TelemetryRollup15Minute", "TelemetryRollupDaily"],
     }).reasons).toContain("Backup restore evidence is older than seven days.");
   });
@@ -91,6 +94,7 @@ describe("retention readiness", () => {
     expect(evaluateRetentionReadiness({
       now,
       backupEvidence: { passed: true, verifiedAt: "2026-08-26T11:00:00.000Z" },
+      rollupEvidence: { passed: true, verifiedAt: "2026-08-26T11:00:00.000Z" },
       existingTables: ["TelemetryRollup15Minute", "TelemetryRollupDaily"],
     })).toEqual({ allowed: true, reasons: [] });
   });

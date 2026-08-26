@@ -64,10 +64,12 @@ export function isDisposableRestoreDatabaseName(name: string) {
 export function evaluateRetentionReadiness({
   now,
   backupEvidence,
+  rollupEvidence,
   existingTables,
 }: {
   now: Date;
   backupEvidence: BackupEvidence | null;
+  rollupEvidence: BackupEvidence | null;
   existingTables: string[];
 }) {
   const reasons: string[] = [];
@@ -81,6 +83,18 @@ export function evaluateRetentionReadiness({
       reasons.push("Backup restore evidence has an invalid verification time.");
     } else if (now.getTime() - verifiedAt.getTime() > 7 * 24 * 60 * 60 * 1000) {
       reasons.push("Backup restore evidence is older than seven days.");
+    }
+  }
+
+  if (!rollupEvidence) {
+    reasons.push("No telemetry roll-up reconciliation evidence is available.");
+  } else {
+    if (!rollupEvidence.passed) reasons.push("The latest telemetry roll-up reconciliation did not pass.");
+    const verifiedAt = new Date(rollupEvidence.verifiedAt);
+    if (Number.isNaN(verifiedAt.getTime())) {
+      reasons.push("Telemetry roll-up reconciliation has an invalid verification time.");
+    } else if (now.getTime() - verifiedAt.getTime() > 24 * 60 * 60 * 1_000) {
+      reasons.push("Telemetry roll-up reconciliation is older than 24 hours.");
     }
   }
 

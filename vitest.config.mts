@@ -41,6 +41,7 @@ export default defineConfig({
         "lib/dashboard/snapshot.ts",
         "lib/telemetry/simulator.ts",
         "lib/telemetry/history.ts",
+        "lib/telemetry/rollup.ts",
         "lib/telemetry/persisted-snapshot.ts",
         "lib/gateway/contract.ts",
         "lib/gateway/credentials.ts",

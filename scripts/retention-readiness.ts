@@ -11,6 +11,7 @@ import { evaluateRetentionReadiness, type BackupEvidence } from "../lib/operatio
 const { Client } = pg;
 const evidenceDirectory = path.resolve("docs/evidence/step-29-backup-and-retention");
 const verificationPath = path.join(evidenceDirectory, "backup-restore-verification.json");
+const rollupVerificationPath = path.resolve("docs/evidence/step-30-telemetry-rollups/telemetry-rollup-verification.json");
 
 type StoredVerification = {
   generatedAt: string;
@@ -43,6 +44,9 @@ async function main() {
   const stored = fs.existsSync(verificationPath)
     ? JSON.parse(fs.readFileSync(verificationPath, "utf8")) as StoredVerification
     : null;
+  const storedRollup = fs.existsSync(rollupVerificationPath)
+    ? JSON.parse(fs.readFileSync(rollupVerificationPath, "utf8")) as { generatedAt: string; passed: boolean }
+    : null;
   let backupArchivePresent = false;
   let backupChecksumMatches = false;
   let backupEvidence: BackupEvidence | null = stored
@@ -65,7 +69,8 @@ async function main() {
   `)).rows.map((row) => row.tablename);
   await client.end();
 
-  const readiness = evaluateRetentionReadiness({ now: new Date(), backupEvidence, existingTables });
+  const rollupEvidence: BackupEvidence | null = storedRollup ? { passed: storedRollup.passed, verifiedAt: storedRollup.generatedAt } : null;
+  const readiness = evaluateRetentionReadiness({ now: new Date(), backupEvidence, rollupEvidence, existingTables });
   if (!backupArchivePresent) readiness.reasons.push("The verified backup archive is not present in the configured backup directory.");
   else if (!backupChecksumMatches) readiness.reasons.push("The verified backup archive checksum no longer matches.");
   readiness.allowed = readiness.reasons.length === 0;
