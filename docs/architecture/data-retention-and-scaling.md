@@ -25,4 +25,4 @@ At the default 30-second gateway interval, one site can produce 2,880 site-level
 5. Only after steps 1–4 pass, schedule small batched deletions of raw rows older than 90 days.
 6. Record every retention job run, deleted row count, and failure without logging credentials or telemetry payloads.
 
-Raw telemetry must never be deleted before its roll-up exists and a restorable backup has been proven. The Step 28 database audit therefore remains read-only.
+Raw telemetry must never be deleted before its roll-up exists and a restorable backup has been proven. Step 29 now creates and restore-tests a PostgreSQL custom archive in an isolated local cluster. The retention readiness audit confirms that archive and checksum, but deletion remains safely blocked because the 15-minute and daily roll-up tables do not exist yet.

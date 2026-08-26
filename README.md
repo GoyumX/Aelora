@@ -29,6 +29,18 @@ To refresh stored weather and rerun only AI forecasts older than 12 hours:
 npm run intelligence:refresh
 ```
 
+To create a local PostgreSQL custom archive, restore it into an isolated
+temporary cluster, and verify schema and row-count parity:
+
+```bash
+npm run db:backup:verify
+npm run db:retention:readiness
+```
+
+Backup archives are written to the ignored `backups/` directory. See
+[`docs/operations/postgresql-backup-and-restore.md`](docs/operations/postgresql-backup-and-restore.md)
+for recovery behavior and production requirements.
+
 In deployment, schedule `POST /api/internal/intelligence-refresh` every 30
 minutes with `Authorization: Bearer <WEATHER_SYNC_SECRET>`. The endpoint applies
 the same persisted freshness gates, so weather is fetched before inference and

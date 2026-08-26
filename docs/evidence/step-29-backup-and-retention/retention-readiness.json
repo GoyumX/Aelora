@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-08-26T04:40:38.356Z",
+  "allowed": false,
+  "reasons": [
+    "Required roll-up table TelemetryRollup15Minute is missing.",
+    "Required roll-up table TelemetryRollupDaily is missing."
+  ],
+  "existingTables": [
+    "Account",
+    "AdminAuditLog",
+    "AlertIncident",
+    "Battery",
+    "DeviceObservation",
+    "EdgeGateway",
+    "GatewayDevice",
+    "GatewayHeartbeat",
+    "Inverter",
+    "ReportSnapshot",
+    "Session",
+    "SolarArray",
+    "SolarForecastPoint",
+    "SolarForecastRun",
+    "SolarForecastVerification",
+    "SolarSite",
+    "SupportTicket",
+    "TelemetryBatch",
+    "TelemetryReading",
+    "User",
+    "UserPreference",
+    "Verification",
+    "WeatherForecastPoint",
+    "WeatherForecastRun",
+    "WeatherObservation",
+    "_prisma_migrations"
+  ],
+  "backupArchivePresent": true,
+  "backupChecksumMatches": true
+}

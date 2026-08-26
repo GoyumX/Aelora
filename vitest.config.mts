@@ -32,6 +32,7 @@ export default defineConfig({
         "lib/navigation.ts",
         "lib/benchmark/statistics.ts",
         "lib/cache/ttl-promise-cache.ts",
+        "lib/operations/backup-policy.ts",
         "lib/alerts/detection.ts",
         "lib/alerts/lifecycle.ts",
         "lib/admin/admin.ts",
