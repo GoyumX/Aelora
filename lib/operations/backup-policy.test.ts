@@ -112,4 +112,17 @@ describe("retention readiness", () => {
       reasons: ["No telemetry roll-up reconciliation evidence is available."],
     });
   });
+
+  it("blocks retention when the restore proof predates the current migration history", () => {
+    const backupEvidence = { passed: true, verifiedAt: "2026-08-26T11:00:00.000Z", schemaCurrent: false } as const;
+    expect(evaluateRetentionReadiness({
+      now,
+      backupEvidence,
+      rollupEvidence: { passed: true, verifiedAt: "2026-08-26T11:30:00.000Z" },
+      existingTables: ["TelemetryRollup15Minute", "TelemetryRollupDaily"],
+    } as Parameters<typeof evaluateRetentionReadiness>[0] & { backupEvidence: typeof backupEvidence })).toEqual({
+      allowed: false,
+      reasons: ["The latest backup restore proof does not include the current migration history."],
+    });
+  });
 });
