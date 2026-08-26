@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   findSites: vi.fn(),
   findReadings: vi.fn(),
   findStoredIntervals: vi.fn(),
+  findDayIntervals: vi.fn(),
   upsertInterval: vi.fn(),
   upsertDay: vi.fn(),
   transaction: vi.fn(),
@@ -40,8 +41,9 @@ describe("telemetry roll-up persistence", () => {
     mocks.findReadings.mockResolvedValue(rawReadings);
     mocks.upsertInterval.mockResolvedValue({ id: "interval-1" });
     mocks.upsertDay.mockResolvedValue({ id: "day-1" });
+    mocks.findDayIntervals.mockResolvedValue([]);
     mocks.transaction.mockImplementation(async (callback) => callback({
-      telemetryRollup15Minute: { upsert: mocks.upsertInterval },
+      telemetryRollup15Minute: { upsert: mocks.upsertInterval, findMany: mocks.findDayIntervals },
       telemetryRollupDaily: { upsert: mocks.upsertDay },
     }));
   });
@@ -76,6 +78,24 @@ describe("telemetry roll-up persistence", () => {
     await expect(rollupSiteRange("missing", from, to)).rejects.toThrow("Solar site was not found");
     expect(mocks.findReadings).not.toHaveBeenCalled();
     expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it("rebuilds a local day from every stored interval instead of overwriting it with the latest window", async () => {
+    const earlier = {
+      bucketStart: new Date("2026-08-01T18:30:00.000Z"), bucketEnd: new Date("2026-08-01T18:45:00.000Z"),
+      generationWh: 100, consumptionWh: 120, importWh: 30, exportWh: 10, batteryChargeWh: 5, batteryDischargeWh: 2,
+      averagePvPowerW: 400, peakPvPowerW: 500, averageLoadPowerW: 480, peakLoadPowerW: 600, averageIrradianceWm2: 450,
+      sampleCount: 30, expectedSampleCount: 30, expectedIntervalSec: 30, coveredDurationSec: 900, coveragePct: 100, maxGapSec: 30,
+      evidenceQuality: "SIMULATED", firstObservedAt: new Date("2026-08-01T18:30:00.000Z"), lastObservedAt: new Date("2026-08-01T18:44:30.000Z"),
+    };
+    mocks.findDayIntervals.mockResolvedValue([earlier, { ...earlier, bucketStart: new Date("2026-08-01T18:45:00.000Z"), bucketEnd: new Date("2026-08-01T19:00:00.000Z"), generationWh: 150 }]);
+
+    await rollupSiteRange("site-1", from, to);
+
+    expect(mocks.findDayIntervals).toHaveBeenCalledWith(expect.objectContaining({
+      where: { siteId: "site-1", bucketStart: { gte: new Date("2026-08-01T18:30:00.000Z"), lt: new Date("2026-08-02T18:30:00.000Z") } },
+    }));
+    expect(mocks.upsertDay).toHaveBeenCalledWith(expect.objectContaining({ create: expect.objectContaining({ generationWh: 250 }) }));
   });
 
   it("reconciles stored intervals against a fresh raw calculation", async () => {
