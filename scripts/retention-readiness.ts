@@ -17,6 +17,7 @@ type StoredVerification = {
   generatedAt: string;
   passed: boolean;
   backup: { relativePath: string; sha256: string } | null;
+  sourceManifest?: { migrations: string[] };
 };
 
 function hashFile(filePath: string) {
@@ -67,7 +68,19 @@ async function main() {
   const existingTables = (await client.query<{ tablename: string }>(`
     SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename
   `)).rows.map((row) => row.tablename);
+  const currentMigrations = (await client.query<{ migration_name: string }>(`
+    SELECT migration_name FROM "_prisma_migrations"
+    WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL
+    ORDER BY migration_name
+  `)).rows.map((row) => row.migration_name);
   await client.end();
+
+  if (backupEvidence) {
+    backupEvidence = {
+      ...backupEvidence,
+      schemaCurrent: JSON.stringify(stored?.sourceManifest?.migrations ?? []) === JSON.stringify(currentMigrations),
+    };
+  }
 
   const rollupEvidence: BackupEvidence | null = storedRollup ? { passed: storedRollup.passed, verifiedAt: storedRollup.generatedAt } : null;
   const readiness = evaluateRetentionReadiness({ now: new Date(), backupEvidence, rollupEvidence, existingTables });

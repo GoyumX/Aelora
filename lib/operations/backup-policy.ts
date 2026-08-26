@@ -7,6 +7,7 @@ export type BackupManifest = {
 export type BackupEvidence = {
   passed: boolean;
   verifiedAt: string;
+  schemaCurrent?: boolean;
 };
 
 const disposableRestorePattern = /^aelora_restore_verify_\d{8}t\d{6}_[a-f0-9]{8}$/;
@@ -78,6 +79,7 @@ export function evaluateRetentionReadiness({
     reasons.push("No backup restore verification evidence is available.");
   } else {
     if (!backupEvidence.passed) reasons.push("The latest backup restore verification did not pass.");
+    if (backupEvidence.schemaCurrent === false) reasons.push("The latest backup restore proof does not include the current migration history.");
     const verifiedAt = new Date(backupEvidence.verifiedAt);
     if (Number.isNaN(verifiedAt.getTime())) {
       reasons.push("Backup restore evidence has an invalid verification time.");
