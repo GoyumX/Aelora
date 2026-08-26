@@ -57,7 +57,7 @@ describe("telemetry roll-up persistence", () => {
     });
 
     expect(mocks.findReadings).toHaveBeenCalledWith(expect.objectContaining({
-      where: { siteId: "site-1", observedAt: { gte: from, lt: to } },
+      where: { siteId: "site-1", observedAt: { gte: new Date("2026-08-01T18:29:30.000Z"), lt: to } },
       orderBy: { observedAt: "asc" },
     }));
     expect(mocks.upsertInterval).toHaveBeenCalledWith(expect.objectContaining({
