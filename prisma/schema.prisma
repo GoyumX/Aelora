@@ -261,23 +261,25 @@ model UserPreference {
 }
 
 model SolarSite {
-  id                  String               @id @default(cuid())
+  id                  String                    @id @default(cuid())
   ownerId             String
   name                String
-  slug                String               @unique
+  slug                String                    @unique
   latitude            Float
   longitude           Float
-  timezone            String               @default("Asia/Colombo")
-  mode                SiteMode             @default(SIMULATED)
-  status              SiteStatus           @default(ACTIVE)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  timezone            String                    @default("Asia/Colombo")
+  mode                SiteMode                  @default(SIMULATED)
+  status              SiteStatus                @default(ACTIVE)
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
   deletedAt           DateTime?
-  owner               User                 @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  owner               User                      @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   arrays              SolarArray[]
   inverters           Inverter[]
   battery             Battery?
   telemetry           TelemetryReading[]
+  telemetryRollups15m TelemetryRollup15Minute[]
+  telemetryRollupsDay TelemetryRollupDaily[]
   gateways            EdgeGateway[]
   weatherObservations WeatherObservation[]
   weatherForecastRuns WeatherForecastRun[]
@@ -555,6 +557,78 @@ model TelemetryReading {
   @@unique([siteId, source, observedAt])
   @@index([siteId, observedAt(sort: Desc)])
   @@index([gatewayId, observedAt(sort: Desc)])
+}
+
+model TelemetryRollup15Minute {
+  id                   String                @id @default(cuid())
+  siteId               String
+  bucketStart          DateTime
+  bucketEnd            DateTime
+  generationWh         Int
+  consumptionWh        Int
+  importWh             Int
+  exportWh             Int
+  batteryChargeWh      Int
+  batteryDischargeWh   Int
+  averagePvPowerW      Int
+  peakPvPowerW         Int
+  averageLoadPowerW    Int
+  peakLoadPowerW       Int
+  averageIrradianceWm2 Int
+  sampleCount          Int
+  expectedSampleCount  Int
+  expectedIntervalSec  Int
+  coveredDurationSec   Int
+  coveragePct          Float
+  maxGapSec            Int
+  evidenceQuality      ForecastActualQuality
+  firstObservedAt      DateTime
+  lastObservedAt       DateTime
+  calculatedAt         DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  site                 SolarSite             @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, bucketStart])
+  @@index([siteId, bucketStart(sort: Desc)])
+  @@index([siteId, coveragePct, bucketStart(sort: Desc)])
+}
+
+model TelemetryRollupDaily {
+  id                    String                @id @default(cuid())
+  siteId                String
+  localDate             DateTime              @db.Date
+  timezone              String
+  dayStartAt            DateTime
+  dayEndAt              DateTime
+  generationWh          Int
+  consumptionWh         Int
+  importWh              Int
+  exportWh              Int
+  batteryChargeWh       Int
+  batteryDischargeWh    Int
+  averagePvPowerW       Int
+  peakPvPowerW          Int
+  averageLoadPowerW     Int
+  peakLoadPowerW        Int
+  averageIrradianceWm2  Int
+  intervalCount         Int
+  completeIntervalCount Int
+  sampleCount           Int
+  expectedSampleCount   Int
+  expectedIntervalSec   Int
+  coveredDurationSec    Int
+  coveragePct           Float
+  maxGapSec             Int
+  evidenceQuality       ForecastActualQuality
+  firstObservedAt       DateTime
+  lastObservedAt        DateTime
+  calculatedAt          DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  site                  SolarSite             @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, localDate])
+  @@index([siteId, localDate(sort: Desc)])
+  @@index([siteId, coveragePct, localDate(sort: Desc)])
 }
 
 model EdgeGateway {
