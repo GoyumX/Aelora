@@ -96,17 +96,19 @@ async function loadRollupInput(siteId: string, from: Date, to: Date) {
     },
   });
   if (!site) throw new Error("Solar site was not found.");
+  const expectedIntervalSec = site.gateways[0]?.expectedIntervalSec ?? 30;
+  const boundaryFrom = new Date(from.getTime() - expectedIntervalSec * 1_000);
   const readings = await db.telemetryReading.findMany({
-    where: { siteId, observedAt: { gte: from, lt: to } },
+    where: { siteId, observedAt: { gte: boundaryFrom, lt: to } },
     orderBy: { observedAt: "asc" },
     select: readingSelect,
   });
-  return { site, readings, expectedIntervalSec: site.gateways[0]?.expectedIntervalSec ?? 30 };
+  return { site, readings, expectedIntervalSec };
 }
 
 export async function rollupSiteRange(siteId: string, from: Date, to: Date) {
   const { site, readings, expectedIntervalSec } = await loadRollupInput(siteId, from, to);
-  const intervals = buildFifteenMinuteRollups(readings, expectedIntervalSec);
+  const intervals = buildFifteenMinuteRollups(readings, expectedIntervalSec).filter((row) => row.bucketStart >= from && row.bucketStart < to);
   const affectedDays = buildDailyRollups(intervals, site.timezone);
   let dailyCount = 0;
   if (intervals.length) {
@@ -162,7 +164,7 @@ function sumTotals(rows: RollupTotals[]): RollupTotals {
 
 export async function reconcileSiteRollups(siteId: string, from: Date, to: Date) {
   const { readings, expectedIntervalSec } = await loadRollupInput(siteId, from, to);
-  const expected = buildFifteenMinuteRollups(readings, expectedIntervalSec);
+  const expected = buildFifteenMinuteRollups(readings, expectedIntervalSec).filter((row) => row.bucketStart >= from && row.bucketStart < to);
   const stored = await db.telemetryRollup15Minute.findMany({
     where: { siteId, bucketStart: { gte: from, lt: to } },
     orderBy: { bucketStart: "asc" },

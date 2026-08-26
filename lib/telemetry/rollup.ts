@@ -87,6 +87,11 @@ function floorToFifteenMinutes(value: Date) {
   return new Date(Math.floor(value.getTime() / FIFTEEN_MINUTES_MS) * FIFTEEN_MINUTES_MS);
 }
 
+export function finalizedRollupCutoff(now: Date) {
+  if (Number.isNaN(now.getTime())) throw new RangeError("A valid reconciliation time is required.");
+  return floorToFifteenMinutes(now);
+}
+
 function localDateKey(value: Date, timezone: string) {
   const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,

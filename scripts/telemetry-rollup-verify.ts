@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { db } from "../lib/db";
-import { compareRollupTotals, type RollupTotals } from "../lib/telemetry/rollup";
+import { compareRollupTotals, finalizedRollupCutoff, type RollupTotals } from "../lib/telemetry/rollup";
 import { reconcileSiteRollups } from "../lib/telemetry/rollup-service";
 
 const outputDirectory = path.resolve("docs/evidence/step-30-telemetry-rollups");
@@ -32,6 +32,8 @@ function html(report: { generatedAt: string; passed: boolean; sites: Array<{ sit
 }
 
 async function main() {
+  const generatedAt = new Date();
+  const finalizedThrough = finalizedRollupCutoff(generatedAt);
   const sites = await db.solarSite.findMany({ where: { deletedAt: null }, orderBy: { createdAt: "asc" }, select: { id: true, name: true } });
   const siteReports = [];
   for (const site of sites) {
@@ -41,7 +43,7 @@ async function main() {
       continue;
     }
     const from = new Date(Math.floor(bounds._min.observedAt.getTime() / (15 * 60_000)) * 15 * 60_000);
-    const to = new Date(bounds._max.observedAt.getTime() + 15 * 60_000);
+    const to = new Date(Math.min(bounds._max.observedAt.getTime() + 15 * 60_000, finalizedThrough.getTime()));
     const rawReconciliation = await reconcileSiteRollups(site.id, from, to);
     const [intervals, days] = await Promise.all([
       db.telemetryRollup15Minute.findMany({ where: { siteId: site.id, bucketStart: { gte: from, lt: to } }, select: { generationWh: true, consumptionWh: true, importWh: true, exportWh: true, batteryChargeWh: true, batteryDischargeWh: true, coveredDurationSec: true } }),
@@ -50,7 +52,7 @@ async function main() {
     const dailyReconciliation = compareRollupTotals(sum(intervals), sum(days));
     siteReports.push({ siteId: site.id, siteName: site.name, rawReadings: bounds._count._all, intervalRows: intervals.length, dailyRows: days.length, rawToIntervalPassed: rawReconciliation.passed, intervalToDailyPassed: dailyReconciliation.passed, differences: [...rawReconciliation.differences, ...dailyReconciliation.differences] });
   }
-  const report = { generatedAt: new Date().toISOString(), passed: siteReports.every((site) => site.rawToIntervalPassed && site.intervalToDailyPassed), sites: siteReports };
+  const report = { generatedAt: generatedAt.toISOString(), finalizedThrough: finalizedThrough.toISOString(), passed: siteReports.every((site) => site.rawToIntervalPassed && site.intervalToDailyPassed), sites: siteReports };
   fs.mkdirSync(outputDirectory, { recursive: true });
   fs.writeFileSync(path.join(outputDirectory, "telemetry-rollup-verification.json"), `${JSON.stringify(report, null, 2)}\n`);
   fs.writeFileSync(path.join(outputDirectory, "telemetry-rollup-verification.html"), html(report));
