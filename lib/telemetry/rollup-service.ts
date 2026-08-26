@@ -166,3 +166,33 @@ export async function reconcileSiteRollups(siteId: string, from: Date, to: Date)
     differences,
   };
 }
+
+export async function runIncrementalTelemetryRollups(now = new Date(), lookbackHours = 2) {
+  if (!Number.isFinite(lookbackHours) || lookbackHours <= 0 || lookbackHours > 48) {
+    throw new RangeError("Roll-up lookback must be between 0 and 48 hours.");
+  }
+  const sites = await db.solarSite.findMany({
+    where: { deletedAt: null, status: "ACTIVE" },
+    orderBy: { createdAt: "asc" },
+    select: { id: true },
+  });
+  const to = new Date(now);
+  const from = new Date(Math.floor((now.getTime() - lookbackHours * 3_600_000) / (15 * 60_000)) * 15 * 60_000);
+  const results = [];
+  for (const site of sites) {
+    try {
+      const result = await rollupSiteRange(site.id, from, to);
+      results.push({ ...result, status: "COMPLETED" as const });
+    } catch (error) {
+      results.push({ siteId: site.id, status: "FAILED" as const, error: error instanceof Error ? error.message : "Unknown roll-up failure." });
+    }
+  }
+  return {
+    attempted: sites.length,
+    completed: results.filter((result) => result.status === "COMPLETED").length,
+    failed: results.filter((result) => result.status === "FAILED").length,
+    from: from.toISOString(),
+    to: to.toISOString(),
+    results,
+  };
+}

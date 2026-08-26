@@ -89,7 +89,7 @@ export function HistoricalAnalytics({ history }: { history: HistoricalTelemetry 
             Historical analytics
           </h1>
           <p className="mt-3 text-muted-foreground">
-            {history.site.name} · stored hourly telemetry, rendered in {history.site.timezone}
+            {history.site.name} · {history.dataResolution === "DAILY_ROLLUP" ? "reconciled daily summaries" : "stored high-resolution telemetry"}, rendered in {history.site.timezone}
           </p>
         </div>
         <a

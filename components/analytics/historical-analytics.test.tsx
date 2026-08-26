@@ -14,6 +14,7 @@ const history = {
   summary: { generationWh: 22000, consumptionWh: 18500, importWh: 2500, exportWh: 6000, selfConsumptionPct: 72.7 },
   comparison: { generationChangePct: 10, consumptionChangePct: -2 },
   completenessPct: 100,
+  dataResolution: "RAW_TELEMETRY" as const,
 };
 
 describe("HistoricalAnalytics", () => {

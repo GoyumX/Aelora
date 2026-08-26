@@ -30,6 +30,7 @@ const input: ReportSnapshotInput = {
     summary: { generationWh: 100_000, consumptionWh: 120_000, importWh: 40_000, exportWh: 20_000, selfConsumptionPct: 80 },
     comparison: { generationChangePct: 5, consumptionChangePct: -2 },
     completenessPct: 98.5,
+    dataResolution: "RAW_TELEMETRY",
   },
   performance: {
     site: { id: "site-1", name: "Colombo Home, West", timezone: "Asia/Colombo" },
