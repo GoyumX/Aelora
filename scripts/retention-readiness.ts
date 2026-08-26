@@ -27,17 +27,22 @@ function hashFile(filePath: string) {
 function html(report: { generatedAt: string; allowed: boolean; reasons: string[]; existingTables: string[]; backupArchivePresent: boolean; backupChecksumMatches: boolean }) {
   const checks = [
     ["Restore verification passed within seven days", !report.reasons.some((reason) => reason.includes("backup") || reason.includes("Backup"))],
+    ["Restore proof contains the current migration history", !report.reasons.some((reason) => reason.includes("migration history"))],
     ["Verified backup archive is still present", report.backupArchivePresent],
     ["Backup archive checksum still matches", report.backupChecksumMatches],
     ["15-minute roll-up table exists", report.existingTables.includes("TelemetryRollup15Minute")],
     ["Daily roll-up table exists", report.existingTables.includes("TelemetryRollupDaily")],
+    ["Roll-up reconciliation passed within 24 hours", !report.reasons.some((reason) => reason.includes("roll-up reconciliation"))],
   ] as const;
   const rows = checks.map(([label, passed]) => `<tr><td><strong>${label}</strong></td><td><span class="status ${passed ? "pass" : "blocked"}">${passed ? "PASS" : "BLOCKED"}</span></td></tr>`).join("");
   const reasons = report.reasons.map((reason) => `<li>${reason}</li>`).join("") || "<li>All retention prerequisites are satisfied.</li>";
 
+  const footer = report.allowed
+    ? "All prerequisites passed. This audit still performs no deletion."
+    : "Retention remains blocked until roll-ups exist and a recent, checksum-valid restore proof is available.";
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Aelora retention readiness</title><style>
   :root{color-scheme:dark;font-family:Inter,Segoe UI,sans-serif;background:#0b0d10;color:#f5f7fb}*{box-sizing:border-box}body{margin:0;padding:42px;background:radial-gradient(circle at 88% 0%,#331b16 0,transparent 35%),#0b0d10}.wrap{max-width:1100px;margin:auto}.eyebrow{color:#fb923c;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:12px}h1{font-size:38px;margin:8px 0 4px}p{color:#aab7c8}.hero,section{border:1px solid #2d2a29;border-radius:18px;background:#11151a;box-shadow:0 18px 45px #0004}.hero{padding:24px;margin:25px 0}.hero strong{display:block;font-size:34px;color:${report.allowed ? "#6ee7b7" : "#fdba74"}}section{padding:22px;margin-top:18px}h2{margin:0 0 15px}table{width:100%;border-collapse:collapse}td{padding:14px 10px;border-bottom:1px solid #242a31}.status{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800}.pass{background:#0b3b2b;color:#6ee7b7}.blocked{background:#4a2417;color:#fdba74}ul{color:#aab7c8;line-height:1.9}.foot{font-size:12px;color:#718096;margin-top:18px}
-  </style></head><body><main class="wrap"><div class="eyebrow">Chapter 7 · Data safety evidence</div><h1>Telemetry retention readiness</h1><p>Fail-closed prerequisite audit · ${report.generatedAt}</p><div class="hero"><span>Raw telemetry deletion</span><strong>${report.allowed ? "ALLOWED" : "SAFELY BLOCKED"}</strong><p>No deletion command is implemented or executed by this audit.</p></div><section><h2>Safety gates</h2><table><tbody>${rows}</tbody></table></section><section><h2>Current blockers</h2><ul>${reasons}</ul></section><p class="foot">Retention remains blocked until roll-ups exist and a recent, checksum-valid restore proof is available.</p></main></body></html>`;
+  </style></head><body><main class="wrap"><div class="eyebrow">Chapter 7 · Data safety evidence</div><h1>Telemetry retention readiness</h1><p>Fail-closed prerequisite audit · ${report.generatedAt}</p><div class="hero"><span>Raw telemetry deletion</span><strong>${report.allowed ? "ALLOWED" : "SAFELY BLOCKED"}</strong><p>No deletion command is implemented or executed by this audit.</p></div><section><h2>Safety gates</h2><table><tbody>${rows}</tbody></table></section><section><h2>Current blockers</h2><ul>${reasons}</ul></section><p class="foot">${footer}</p></main></body></html>`;
 }
 
 async function main() {

@@ -25,11 +25,11 @@ test.describe.serial("Step 29 backup and retention evidence", () => {
     await page.screenshot({ path: evidencePath("01-backup-restore-proof.png"), fullPage: true });
   });
 
-  test("captures the fail-closed retention guard", async ({ page }) => {
+  test("captures current fail-closed retention prerequisites", async ({ page }) => {
     await page.setViewportSize({ width: 1400, height: 1000 });
     await page.goto(pathToFileURL(evidencePath("retention-readiness.html")).href);
     await expect(page.getByRole("heading", { name: "Telemetry retention readiness" })).toBeVisible();
-    await expect(page.getByText("SAFELY BLOCKED", { exact: true })).toBeVisible();
-    await page.screenshot({ path: evidencePath("02-retention-safely-blocked.png"), fullPage: true });
+    await expect(page.getByText(/SAFELY BLOCKED|ALLOWED/, { exact: true })).toBeVisible();
+    await page.screenshot({ path: evidencePath("02-retention-readiness.png"), fullPage: true });
   });
 });

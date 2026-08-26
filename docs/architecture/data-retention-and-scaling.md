@@ -4,7 +4,7 @@
 
 Aelora stores every accepted gateway sample in PostgreSQL and keeps the original measurement time, source, quality, gateway, and device observations. The current development database does not automatically delete raw readings. This is intentional while the simulator, forecast verification, and dissertation evidence are still being developed.
 
-At the default 30-second gateway interval, one site can produce 2,880 site-level readings per day plus per-device observations. Dashboard queries are bounded to the current day, and the latest-reading paths use composite `siteId + observedAt` indexes. Long historical ranges currently load raw readings and aggregate them in the application service, so they must not be treated as an unlimited production design.
+At the default 30-second gateway interval, one site can produce 2,880 site-level readings per day plus per-device observations. Dashboard queries are bounded to the current day, and the latest-reading paths use composite `siteId + observedAt` indexes. Step 30 adds UTC-aligned 15-minute and site-local daily summaries. Long-range Historical Analytics and Reports now prefer reconciled daily rows, while live and short-range paths retain high-resolution evidence. Missing roll-ups cause a safe raw-data fallback.
 
 ## Production target policy
 
@@ -25,4 +25,4 @@ At the default 30-second gateway interval, one site can produce 2,880 site-level
 5. Only after steps 1–4 pass, schedule small batched deletions of raw rows older than 90 days.
 6. Record every retention job run, deleted row count, and failure without logging credentials or telemetry payloads.
 
-Raw telemetry must never be deleted before its roll-up exists and a restorable backup has been proven. Step 29 now creates and restore-tests a PostgreSQL custom archive in an isolated local cluster. The retention readiness audit confirms that archive and checksum, but deletion remains safely blocked because the 15-minute and daily roll-up tables do not exist yet.
+Raw telemetry must never be deleted before its roll-up exists and a current-schema backup has been restored successfully. Step 30 backfilled and reconciled both roll-up layers, created a fresh restore proof, and added a non-destructive 90-day preview. The preview found zero missing summaries and deleted zero rows. Actual deletion remains deliberately unimplemented pending production review.

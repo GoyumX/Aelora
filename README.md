@@ -35,11 +35,19 @@ temporary cluster, and verify schema and row-count parity:
 ```bash
 npm run db:backup:verify
 npm run db:retention:readiness
+npm run db:rollups:backfill
+npm run db:rollups:verify
+npm run db:retention:dry-run
 ```
 
 Backup archives are written to the ignored `backups/` directory. See
 [`docs/operations/postgresql-backup-and-restore.md`](docs/operations/postgresql-backup-and-restore.md)
 for recovery behavior and production requirements.
+
+Schedule `POST /api/internal/telemetry-rollups` every 15 minutes with the same
+private scheduler bearer secret. It idempotently refreshes a trailing two-hour
+window so delayed gateway readings are incorporated. See
+[`docs/operations/telemetry-rollups-and-retention.md`](docs/operations/telemetry-rollups-and-retention.md).
 
 In deployment, schedule `POST /api/internal/intelligence-refresh` every 30
 minutes with `Authorization: Bearer <WEATHER_SYNC_SECRET>`. The endpoint applies

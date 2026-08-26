@@ -48,7 +48,7 @@ export function AppSidebar({ alertCount = 0, className, onNavigate, role = "USER
       >
         {navigation.map((group) => (
           <div key={group.label}>
-            <p className="mb-2 px-3 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/55">
+            <p className="mb-2 px-3 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/75">
               {group.label}
             </p>
             <ul className="space-y-1">
@@ -129,7 +129,7 @@ export function AppSidebar({ alertCount = 0, className, onNavigate, role = "USER
             </span>
             Gateway pipeline ready
           </div>
-          <p className="mt-1 text-xs leading-5 text-sidebar-foreground/60">
+          <p className="mt-1 text-xs leading-5 text-sidebar-foreground/75">
             Live data arrives through an enrolled site gateway.
           </p>
         </div>
