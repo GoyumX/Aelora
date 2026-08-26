@@ -107,8 +107,9 @@ async function loadRollupInput(siteId: string, from: Date, to: Date) {
 export async function rollupSiteRange(siteId: string, from: Date, to: Date) {
   const { site, readings, expectedIntervalSec } = await loadRollupInput(siteId, from, to);
   const intervals = buildFifteenMinuteRollups(readings, expectedIntervalSec);
-  const days = buildDailyRollups(intervals, site.timezone);
-  if (intervals.length || days.length) {
+  const affectedDays = buildDailyRollups(intervals, site.timezone);
+  let dailyCount = 0;
+  if (intervals.length) {
     await db.$transaction(async (transaction: Prisma.TransactionClient) => {
       for (const row of intervals) {
         const data = intervalData(row);
@@ -118,7 +119,22 @@ export async function rollupSiteRange(siteId: string, from: Date, to: Date) {
           update: data,
         });
       }
-      for (const row of days) {
+      const affectedFrom = new Date(Math.min(...affectedDays.map((row) => row.dayStartAt.getTime())));
+      const affectedTo = new Date(Math.max(...affectedDays.map((row) => row.dayEndAt.getTime())));
+      const storedIntervals = await transaction.telemetryRollup15Minute.findMany({
+        where: { siteId, bucketStart: { gte: affectedFrom, lt: affectedTo } },
+        orderBy: { bucketStart: "asc" },
+        select: {
+          bucketStart: true, bucketEnd: true, generationWh: true, consumptionWh: true, importWh: true, exportWh: true,
+          batteryChargeWh: true, batteryDischargeWh: true, averagePvPowerW: true, peakPvPowerW: true,
+          averageLoadPowerW: true, peakLoadPowerW: true, averageIrradianceWm2: true, sampleCount: true,
+          expectedSampleCount: true, expectedIntervalSec: true, coveredDurationSec: true, coveragePct: true,
+          maxGapSec: true, evidenceQuality: true, firstObservedAt: true, lastObservedAt: true,
+        },
+      });
+      const completeDays = buildDailyRollups(storedIntervals.length ? storedIntervals : intervals, site.timezone);
+      dailyCount = completeDays.length;
+      for (const row of completeDays) {
         const localDate = new Date(`${row.localDate}T00:00:00.000Z`);
         const data = dailyData(row, site.timezone);
         await transaction.telemetryRollupDaily.upsert({
@@ -129,7 +145,7 @@ export async function rollupSiteRange(siteId: string, from: Date, to: Date) {
       }
     });
   }
-  return { siteId, from: from.toISOString(), to: to.toISOString(), rawReadingCount: readings.length, intervalCount: intervals.length, dailyCount: days.length };
+  return { siteId, from: from.toISOString(), to: to.toISOString(), rawReadingCount: readings.length, intervalCount: intervals.length, dailyCount };
 }
 
 function sumTotals(rows: RollupTotals[]): RollupTotals {
