@@ -94,4 +94,18 @@ describe("retention readiness", () => {
       existingTables: ["TelemetryRollup15Minute", "TelemetryRollupDaily"],
     })).toEqual({ allowed: true, reasons: [] });
   });
+
+  it("blocks retention when roll-up reconciliation evidence is missing even if both tables exist", () => {
+    const input = {
+      now,
+      backupEvidence: { passed: true, verifiedAt: "2026-08-26T11:00:00.000Z" },
+      rollupEvidence: null,
+      existingTables: ["TelemetryRollup15Minute", "TelemetryRollupDaily"],
+    } as Parameters<typeof evaluateRetentionReadiness>[0] & { rollupEvidence: null };
+
+    expect(evaluateRetentionReadiness(input)).toEqual({
+      allowed: false,
+      reasons: ["No telemetry roll-up reconciliation evidence is available."],
+    });
+  });
 });
