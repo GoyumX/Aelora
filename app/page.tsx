@@ -194,11 +194,11 @@ export default function HomePage() {
             </div>
             <div className="relative mx-auto w-full max-w-xl rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-2xl shadow-black/20">
               <div className="rounded-2xl border border-white/10 bg-[#102a4c] p-6">
-                <div className="flex items-center justify-between"><div><p className="text-xs text-white/50">Simulated live output</p><p className="mt-1 font-mono text-3xl font-semibold">4.82 kW</p></div><span className="rounded-full bg-energy/15 px-3 py-1 text-xs font-semibold text-energy">● Healthy</span></div>
+                <div className="flex items-center justify-between"><div><p className="text-xs text-white/60">Simulated live output</p><p className="mt-1 font-mono text-3xl font-semibold">4.82 kW</p></div><span className="rounded-full bg-energy/20 px-3 py-1 text-xs font-semibold text-[#7ee7a2]">● Healthy</span></div>
                 <div className="mt-8 flex h-40 items-end gap-2" aria-hidden="true">
                   {[18, 28, 43, 61, 75, 91, 82, 70, 51, 35, 22].map((height, index) => <div className="flex-1 rounded-t bg-gradient-to-t from-energy/35 to-solar" key={index} style={{ height: `${height}%` }} />)}
                 </div>
-                <div className="mt-5 grid grid-cols-3 gap-3 border-t border-white/10 pt-5 text-center"><div><p className="text-xs text-white/45">Today</p><p className="mt-1 font-mono font-semibold">18.4 kWh</p></div><div><p className="text-xs text-white/45">Battery</p><p className="mt-1 font-mono font-semibold">76%</p></div><div><p className="text-xs text-white/45">Forecast</p><p className="mt-1 font-mono font-semibold">+8%</p></div></div>
+                <div className="mt-5 grid grid-cols-3 gap-3 border-t border-white/10 pt-5 text-center"><div><p className="text-xs text-white/70">Today</p><p className="mt-1 font-mono font-semibold">18.4 kWh</p></div><div><p className="text-xs text-white/70">Battery</p><p className="mt-1 font-mono font-semibold">76%</p></div><div><p className="text-xs text-white/70">Forecast</p><p className="mt-1 font-mono font-semibold">+8%</p></div></div>
               </div>
             </div>
           </div>
@@ -216,7 +216,7 @@ export default function HomePage() {
         <section className="px-4 pb-24 sm:px-6 lg:px-8 lg:pb-32">
           <div className="relative mx-auto max-w-[90rem] overflow-hidden rounded-[2rem] bg-primary px-6 py-14 text-center text-primary-foreground sm:px-12 sm:py-18">
             <div aria-hidden="true" className="absolute -right-20 -top-28 size-80 rounded-full bg-solar/15 blur-3xl" />
-            <div className="relative mx-auto max-w-2xl"><h2 className="font-heading text-4xl font-semibold tracking-[-0.045em] text-balance">Ready to understand your solar future?</h2><p className="mt-4 text-lg leading-8 text-primary-foreground/70">Create your account now. The next setup step will build your first simulated site.</p><Link className={cn(buttonVariants({ size: "lg" }), "mt-8 h-12 bg-solar px-6 text-[#342400] hover:bg-solar/90")} href="/sign-up">Create your Aelora account <ArrowRight aria-hidden="true" /></Link></div>
+            <div className="relative mx-auto max-w-2xl"><h2 className="font-heading text-4xl font-semibold tracking-[-0.045em] text-balance">Ready to understand your solar future?</h2><p className="mt-4 text-lg leading-8 text-primary-foreground/90">Create your account now. The next setup step will build your first simulated site.</p><Link className={cn(buttonVariants({ size: "lg" }), "mt-8 h-12 bg-solar px-6 text-[#342400] hover:bg-solar/90")} href="/sign-up">Create your Aelora account <ArrowRight aria-hidden="true" /></Link></div>
           </div>
         </section>
       </main>

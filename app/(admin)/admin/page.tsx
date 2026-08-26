@@ -1,11 +1,12 @@
-import { PagePlaceholder } from "@/components/shell/page-placeholder";
+import type { Metadata } from "next";
 
-export default function AdminPage() {
-  return (
-    <PagePlaceholder
-      description="Manage users, model versions, simulator runs, platform health, and audited administrative activity."
-      eyebrow="Administration"
-      title="Admin Console"
-    />
-  );
+import { AdminConsole } from "@/components/admin/admin-console";
+import { requireAdmin } from "@/lib/auth/session";
+import { getAdminConsoleView } from "@/lib/admin/admin-service";
+
+export const metadata: Metadata = { title: "Admin console" };
+
+export default async function AdminPage() {
+  const admin = await requireAdmin();
+  return <AdminConsole view={await getAdminConsoleView(admin.id)} />;
 }

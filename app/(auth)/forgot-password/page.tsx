@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { MailCheck } from "lucide-react";
+import type { Metadata } from "next";
 
 import { AuthCard } from "@/components/auth/auth-card";
+
+export const metadata: Metadata = { title: "Reset password" };
 
 export default function ForgotPasswordPage() {
   return (

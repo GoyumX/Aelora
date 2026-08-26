@@ -70,3 +70,42 @@ Lines      97.28%
 ## Known boundary
 
 The latest endpoint generates an on-demand canonical snapshot. Minute-level persistence, aggregation, admin scenario activation, and historical range APIs remain future steps; the current endpoint does not mutate data during a `GET` request.
+
+## Interactive power-trend update — 2026-08-25
+
+### User journey
+
+- An owner can hover or keyboard-focus the recent power trend to inspect the exact local date and time, solar output, and household demand for the nearest persisted sample.
+
+### RED evidence
+
+`npm test -- --run components/monitoring/live-monitoring.test.tsx --reporter=verbose --maxWorkers=1`
+
+```text
+Test Files  1 failed (1)
+Tests       1 failed | 5 passed (6)
+Reason      The static chart had no Power (kW) axis or interactive data explorer.
+```
+
+### GREEN evidence
+
+`npm test -- --run components/monitoring/live-monitoring.test.tsx components/charts/interactive-power-chart.test.tsx --reporter=verbose --maxWorkers=2`
+
+```text
+Test Files  2 passed (2)
+Tests       8 passed (8)
+```
+
+The passing tests guarantee that the chart exposes labeled axes and that its floating tooltip reports the Colombo-local date/time, solar power, and household demand in kW. The shared explorer also supports focus and arrow-key navigation.
+
+### Final verification
+
+```text
+Full test suite     78 files passed; 277 tests passed
+Lint                passed
+Type-check          passed
+Production build    passed
+Live Monitoring E2E passed; automated WCAG and mobile reflow checks passed
+```
+
+Coverage was not rerun for this narrowly scoped presentation change; the component behavior is covered by focused integration tests and the existing shared-chart tests.

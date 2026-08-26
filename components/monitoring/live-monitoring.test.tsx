@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fetchTelemetry, LiveMonitoring } from "@/components/monitoring/live-monitoring";
@@ -84,6 +85,20 @@ describe("LiveMonitoring", () => {
     expect(screen.getAllByText("East array").length).toBeGreaterThan(0);
     expect(screen.getByRole("img", { name: /last-hour solar and household power/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Refresh telemetry" })).toBeInTheDocument();
+  });
+
+  it("reveals the recent sample time, solar power, and household demand in the chart tooltip", async () => {
+    const user = userEvent.setup();
+    render(<LiveMonitoring initialTelemetry={telemetry} />);
+
+    expect(screen.getByText("Power (kW)")).toBeInTheDocument();
+    expect(screen.getByText("Site local time (Asia/Colombo)")).toBeInTheDocument();
+
+    await user.hover(screen.getByRole("slider", { name: /last-hour solar and household power/i }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Fri, Aug 7 · 11:00");
+    expect(screen.getByRole("status")).toHaveTextContent("Solar power3.60 kW");
+    expect(screen.getByRole("status")).toHaveTextContent("Household demand1.40 kW");
   });
 
   it("renders import, discharge, fault, and refresh-failure states with text", () => {

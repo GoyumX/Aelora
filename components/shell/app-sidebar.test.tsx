@@ -42,4 +42,9 @@ describe("AppSidebar", () => {
     rerender(<AppSidebar role="ADMIN" />);
     expect(screen.getByRole("link", { name: "Admin Console" })).toHaveAttribute("href", "/admin");
   });
+
+  it("shows the real open incident count instead of a static badge", () => {
+    render(<AppSidebar alertCount={4} />);
+    expect(screen.getByRole("link", { name: "Alerts, 4 open" })).toHaveAttribute("href", "/alerts");
+  });
 });

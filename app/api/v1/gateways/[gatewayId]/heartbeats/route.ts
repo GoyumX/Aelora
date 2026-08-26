@@ -56,17 +56,20 @@ export async function POST(
     select: { heartbeatId: true, receivedAt: true },
   });
   if (existing) {
+    const expectedIntervalSec = parsed.data.publishIntervalSec ?? gateway.expectedIntervalSec;
     return NextResponse.json({
       data: {
         heartbeatId: existing.heartbeatId,
         accepted: true,
         duplicate: true,
         receivedAt: existing.receivedAt.toISOString(),
+        expectedIntervalSec,
       },
     });
   }
 
   try {
+    const expectedIntervalSec = parsed.data.publishIntervalSec ?? gateway.expectedIntervalSec;
     await db.$transaction([
       db.gatewayHeartbeat.create({
         data: {
@@ -87,6 +90,7 @@ export async function POST(
           lastSeenAt: receivedAt,
           lastHeartbeatAt: receivedAt,
           softwareVersion: parsed.data.softwareVersion,
+          expectedIntervalSec,
         },
       }),
     ]);
@@ -100,7 +104,7 @@ export async function POST(
   }
 
   return NextResponse.json(
-    { data: { heartbeatId: parsed.data.heartbeatId, accepted: true, duplicate: false, receivedAt: receivedAt.toISOString() } },
+    { data: { heartbeatId: parsed.data.heartbeatId, accepted: true, duplicate: false, receivedAt: receivedAt.toISOString(), expectedIntervalSec: parsed.data.publishIntervalSec ?? gateway.expectedIntervalSec } },
     {
       status: 201,
       headers: {

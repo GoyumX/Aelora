@@ -1,0 +1,383 @@
+{
+  "generatedAt": "2026-08-26T03:30:25.946Z",
+  "environment": "win32 · Node v20.20.0 · local Next.js development server",
+  "pageResults": [
+    {
+      "route": "/dashboard",
+      "navigationMs": {
+        "count": 5,
+        "min": 457.6,
+        "max": 624.5,
+        "mean": 539.7,
+        "p50": 521.7,
+        "p95": 624.5,
+        "p99": 624.5,
+        "budget": 2500,
+        "passed": true
+      },
+      "ttfbMs": {
+        "count": 5,
+        "min": 333.2,
+        "max": 498.8,
+        "mean": 403.78,
+        "p50": 380,
+        "p95": 498.8,
+        "p99": 498.8,
+        "budget": 800,
+        "passed": true
+      },
+      "lcpMs": {
+        "count": 5,
+        "min": 388,
+        "max": 548,
+        "mean": 464.8,
+        "p50": 436,
+        "p95": 548,
+        "p99": 548,
+        "budget": 2500,
+        "passed": true
+      },
+      "cls": {
+        "count": 5,
+        "min": 0,
+        "max": 0,
+        "mean": 0,
+        "p50": 0,
+        "p95": 0,
+        "p99": 0,
+        "budget": 0.1,
+        "passed": true
+      },
+      "transferredKb": {
+        "count": 5,
+        "min": 5.57,
+        "max": 5.57,
+        "mean": 5.57,
+        "p50": 5.57,
+        "p95": 5.57,
+        "p99": 5.57,
+        "budget": 2000,
+        "passed": true
+      }
+    },
+    {
+      "route": "/live-monitoring",
+      "navigationMs": {
+        "count": 5,
+        "min": 271,
+        "max": 464.5,
+        "mean": 339.98,
+        "p50": 302.4,
+        "p95": 464.5,
+        "p99": 464.5,
+        "budget": 2500,
+        "passed": true
+      },
+      "ttfbMs": {
+        "count": 5,
+        "min": 142.8,
+        "max": 250.7,
+        "mean": 188.82,
+        "p50": 173.1,
+        "p95": 250.7,
+        "p99": 250.7,
+        "budget": 800,
+        "passed": true
+      },
+      "lcpMs": {
+        "count": 5,
+        "min": 184,
+        "max": 376,
+        "mean": 253.6,
+        "p50": 220,
+        "p95": 376,
+        "p99": 376,
+        "budget": 2500,
+        "passed": true
+      },
+      "cls": {
+        "count": 5,
+        "min": 0,
+        "max": 0,
+        "mean": 0,
+        "p50": 0,
+        "p95": 0,
+        "p99": 0,
+        "budget": 0.1,
+        "passed": true
+      },
+      "transferredKb": {
+        "count": 5,
+        "min": 5.86,
+        "max": 5.86,
+        "mean": 5.86,
+        "p50": 5.86,
+        "p95": 5.86,
+        "p99": 5.86,
+        "budget": 2000,
+        "passed": true
+      }
+    },
+    {
+      "route": "/ai-forecast",
+      "navigationMs": {
+        "count": 5,
+        "min": 289.8,
+        "max": 330.2,
+        "mean": 306.24,
+        "p50": 299.9,
+        "p95": 330.2,
+        "p99": 330.2,
+        "budget": 2500,
+        "passed": true
+      },
+      "ttfbMs": {
+        "count": 5,
+        "min": 157.5,
+        "max": 180,
+        "mean": 165.9,
+        "p50": 164.8,
+        "p95": 180,
+        "p99": 180,
+        "budget": 800,
+        "passed": true
+      },
+      "lcpMs": {
+        "count": 5,
+        "min": 204,
+        "max": 240,
+        "mean": 218.4,
+        "p50": 216,
+        "p95": 240,
+        "p99": 240,
+        "budget": 2500,
+        "passed": true
+      },
+      "cls": {
+        "count": 5,
+        "min": 0,
+        "max": 0,
+        "mean": 0,
+        "p50": 0,
+        "p95": 0,
+        "p99": 0,
+        "budget": 0.1,
+        "passed": true
+      },
+      "transferredKb": {
+        "count": 5,
+        "min": 5.86,
+        "max": 5.86,
+        "mean": 5.86,
+        "p50": 5.86,
+        "p95": 5.86,
+        "p99": 5.86,
+        "budget": 2000,
+        "passed": true
+      }
+    },
+    {
+      "route": "/performance",
+      "navigationMs": {
+        "count": 5,
+        "min": 389.9,
+        "max": 501.3,
+        "mean": 454.3,
+        "p50": 444.7,
+        "p95": 501.3,
+        "p99": 501.3,
+        "budget": 2500,
+        "passed": true
+      },
+      "ttfbMs": {
+        "count": 5,
+        "min": 243.6,
+        "max": 353.1,
+        "mean": 282.22,
+        "p50": 260.5,
+        "p95": 353.1,
+        "p99": 353.1,
+        "budget": 800,
+        "passed": true
+      },
+      "lcpMs": {
+        "count": 5,
+        "min": 292,
+        "max": 400,
+        "mean": 332.8,
+        "p50": 308,
+        "p95": 400,
+        "p99": 400,
+        "budget": 2500,
+        "passed": true
+      },
+      "cls": {
+        "count": 5,
+        "min": 0,
+        "max": 0,
+        "mean": 0,
+        "p50": 0,
+        "p95": 0,
+        "p99": 0,
+        "budget": 0.1,
+        "passed": true
+      },
+      "transferredKb": {
+        "count": 5,
+        "min": 5.57,
+        "max": 5.57,
+        "mean": 5.57,
+        "p50": 5.57,
+        "p95": 5.57,
+        "p99": 5.57,
+        "budget": 2000,
+        "passed": true
+      }
+    },
+    {
+      "route": "/historical-analytics",
+      "navigationMs": {
+        "count": 5,
+        "min": 338,
+        "max": 487,
+        "mean": 405.2,
+        "p50": 404.2,
+        "p95": 487,
+        "p99": 487,
+        "budget": 2500,
+        "passed": true
+      },
+      "ttfbMs": {
+        "count": 5,
+        "min": 139.5,
+        "max": 200.9,
+        "mean": 159.36,
+        "p50": 152.5,
+        "p95": 200.9,
+        "p99": 200.9,
+        "budget": 800,
+        "passed": true
+      },
+      "lcpMs": {
+        "count": 5,
+        "min": 192,
+        "max": 272,
+        "mean": 215.2,
+        "p50": 196,
+        "p95": 272,
+        "p99": 272,
+        "budget": 2500,
+        "passed": true
+      },
+      "cls": {
+        "count": 5,
+        "min": 0,
+        "max": 0,
+        "mean": 0,
+        "p50": 0,
+        "p95": 0,
+        "p99": 0,
+        "budget": 0.1,
+        "passed": true
+      },
+      "transferredKb": {
+        "count": 5,
+        "min": 5.86,
+        "max": 5.86,
+        "mean": 5.86,
+        "p50": 5.86,
+        "p95": 5.86,
+        "p99": 5.86,
+        "budget": 2000,
+        "passed": true
+      }
+    }
+  ],
+  "apiResults": [
+    {
+      "name": "Latest telemetry",
+      "path": "/api/sites/cmshudowo0003uoww6v8pimyn/telemetry/latest",
+      "latencyMs": {
+        "count": 30,
+        "min": 103,
+        "max": 211.53,
+        "mean": 137.8,
+        "p50": 124.76,
+        "p95": 209.7,
+        "p99": 211.53,
+        "budget": 750,
+        "passed": true
+      },
+      "averageResponseKb": 5.5,
+      "statusCounts": {
+        "200": 30
+      },
+      "errorRatePct": 0,
+      "passed": true
+    },
+    {
+      "name": "30-day history",
+      "path": "/api/sites/cmshudowo0003uoww6v8pimyn/telemetry?from=2026-07-26&to=2026-08-25&grain=day",
+      "latencyMs": {
+        "count": 30,
+        "min": 73.4,
+        "max": 117.72,
+        "mean": 93.06,
+        "p50": 89.73,
+        "p95": 116.85,
+        "p99": 117.72,
+        "budget": 1500,
+        "passed": true
+      },
+      "averageResponseKb": 6.37,
+      "statusCounts": {
+        "200": 30
+      },
+      "errorRatePct": 0,
+      "passed": true
+    },
+    {
+      "name": "Latest AI forecast",
+      "path": "/api/sites/cmshudowo0003uoww6v8pimyn/forecast/latest",
+      "latencyMs": {
+        "count": 30,
+        "min": 81.86,
+        "max": 114.1,
+        "mean": 95.27,
+        "p50": 93.69,
+        "p95": 112.08,
+        "p99": 114.1,
+        "budget": 750,
+        "passed": true
+      },
+      "averageResponseKb": 34.12,
+      "statusCounts": {
+        "200": 30
+      },
+      "errorRatePct": 0,
+      "passed": true
+    },
+    {
+      "name": "Stored weather",
+      "path": "/api/sites/cmshudowo0003uoww6v8pimyn/weather",
+      "latencyMs": {
+        "count": 30,
+        "min": 85.48,
+        "max": 189.55,
+        "mean": 119.67,
+        "p50": 110.71,
+        "p95": 187.54,
+        "p99": 189.55,
+        "budget": 750,
+        "passed": true
+      },
+      "averageResponseKb": 48.32,
+      "statusCounts": {
+        "200": 30
+      },
+      "errorRatePct": 0,
+      "passed": true
+    }
+  ],
+  "passed": true
+}

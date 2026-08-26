@@ -1,14 +1,20 @@
 import "server-only";
 
+import { createTtlPromiseCache } from "@/lib/cache/ttl-promise-cache";
 import { db } from "@/lib/db";
 import { aggregateTelemetry, inferSampleIntervalMinutes, type HistoricalTelemetry, type HistoryGrain } from "@/lib/telemetry/history";
+
+const historyCache = createTtlPromiseCache<HistoricalTelemetry>({
+  ttlMs: 60_000,
+  maxEntries: 32,
+});
 
 function percentageChange(current: number, previous: number) {
   if (!previous) return null;
   return Math.round((current - previous) / previous * 1000) / 10;
 }
 
-export async function getHistoricalTelemetry(site: { id: string; name: string; timezone: string }, from: Date, to: Date, grain: HistoryGrain): Promise<HistoricalTelemetry> {
+async function calculateHistoricalTelemetry(site: { id: string; name: string; timezone: string }, from: Date, to: Date, grain: HistoryGrain): Promise<HistoricalTelemetry> {
   const duration = to.getTime() - from.getTime();
   const previousFrom = new Date(from.getTime() - duration);
   const select = { observedAt: true, pvPowerW: true, loadPowerW: true, gridPowerW: true, batteryPowerW: true, irradianceWm2: true, quality: true } as const;
@@ -28,4 +34,9 @@ export async function getHistoricalTelemetry(site: { id: string; name: string; t
       consumptionChangePct: percentageChange(current.summary.consumptionWh, previous.summary.consumptionWh),
     },
   };
+}
+
+export function getHistoricalTelemetry(site: { id: string; name: string; timezone: string }, from: Date, to: Date, grain: HistoryGrain): Promise<HistoricalTelemetry> {
+  const key = [site.id, site.timezone, from.toISOString(), to.toISOString(), grain].join(":");
+  return historyCache.get(key, () => calculateHistoricalTelemetry(site, from, to, grain));
 }

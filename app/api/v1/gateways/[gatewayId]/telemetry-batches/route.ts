@@ -1,11 +1,13 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
+import { evaluateAlertsForSiteId } from "@/lib/alerts/alert-service";
 import { db } from "@/lib/db";
 import { authenticateGateway } from "@/lib/gateway/authentication";
 import { telemetryBatchSchema, validateTelemetryTiming } from "@/lib/gateway/contract";
 import { readBearerToken } from "@/lib/gateway/credentials";
 import { buildDevicePersistence, buildReadingPersistence } from "@/lib/gateway/ingestion-mapper";
+import { isTelemetryTimestampConflict } from "@/lib/gateway/ingest-conflicts";
 
 function unauthorized() {
   return NextResponse.json(
@@ -126,11 +128,26 @@ export async function POST(
       });
     });
   } catch (error) {
+    if (isTelemetryTimestampConflict(error)) {
+      return NextResponse.json({
+        data: {
+          batchId: parsed.data.batchId,
+          accepted: true,
+          duplicate: true,
+          duplicateReason: "site_source_observed_at",
+          receivedAt: receivedAt.toISOString(),
+        },
+      });
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return NextResponse.json({ error: { code: "batch_conflict", message: "The batch conflicts with telemetry already accepted by Aelora." } }, { status: 409 });
     }
     throw error;
   }
+
+  await evaluateAlertsForSiteId(gateway.siteId, receivedAt).catch((error) => {
+    console.error("Telemetry was accepted but alert evaluation failed", error);
+  });
 
   return NextResponse.json(
     { data: { batchId: parsed.data.batchId, accepted: true, duplicate: false, receivedAt: receivedAt.toISOString() } },

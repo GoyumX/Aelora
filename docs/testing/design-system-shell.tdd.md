@@ -48,3 +48,31 @@ The coverage scope targets Aelora-owned shell and navigation primitives rather t
 - Site selector, notifications, user menu, mobile navigation, and theme controls have accessible names.
 - A keyboard skip link targets the main landmark.
 - Each route foundation has a single named level-one heading and visible status text.
+
+## Dropdown group-context regression — 2026-08-25
+
+Opening either header dropdown previously mounted a Base UI `MenuGroupLabel` without the required `Menu.Group` ancestor. The initial render test did not expose the error because portal content mounts only when a trigger is opened.
+
+RED command and evidence:
+
+```text
+npm test -- --run components/shell/app-header.test.tsx --reporter=verbose --maxWorkers=1
+Test Files  1 failed (1)
+Tests       1 failed | 1 passed (2)
+Unhandled  Base UI: MenuGroupContext is missing
+```
+
+Both dropdown contents now wrap their label, separator, and items in `DropdownMenuGroup`. The same focused test then passed both tests. A Playwright test opens both real portal menus and confirms their items are visible.
+
+Final evidence:
+
+```text
+Focused component tests  2 passed
+Browser click path       1 passed
+Full suite               78 files; 280 tests passed
+ESLint                   passed
+TypeScript               passed
+Production build         passed
+```
+
+Coverage was not rerun for this small composition fix. No checkpoint commits were created because Git history remains user-controlled.

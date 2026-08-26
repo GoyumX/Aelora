@@ -1,19 +1,25 @@
 import { ArrowRight, PanelsTopLeft } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/session";
-import { createDashboardSnapshotFromTelemetry } from "@/lib/dashboard/snapshot";
+import { createDashboardSnapshotFromTelemetry, summarizeDashboardForecast } from "@/lib/dashboard/snapshot";
 import { db } from "@/lib/db";
+import { getLatestSiteForecast } from "@/lib/forecast/forecast-service";
 import { getLatestTelemetrySnapshot } from "@/lib/telemetry/latest-service";
+import { getLatestSiteWeather } from "@/lib/weather/weather-service";
+
+export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
+  const now = new Date();
   const user = await requireUser();
   const site = await db.solarSite.findFirst({
     where: { ownerId: user.id, deletedAt: null },
     orderBy: { createdAt: "asc" },
-    select: { id: true, name: true, mode: true, status: true, timezone: true, arrays: { where: { archivedAt: null, status: "ACTIVE" }, select: { panelCount: true, ratedPowerW: true } } },
+    select: { id: true, name: true, mode: true, status: true, timezone: true, latitude: true, longitude: true, arrays: { where: { archivedAt: null, status: "ACTIVE" }, select: { panelCount: true, ratedPowerW: true } } },
   });
 
   if (!site) {
@@ -27,7 +33,11 @@ export default async function DashboardPage() {
     );
   }
 
-  const telemetry = await getLatestTelemetrySnapshot(site);
+  const [telemetry, weather, latestForecast] = await Promise.all([
+    getLatestTelemetrySnapshot(site, now),
+    getLatestSiteWeather(site.id),
+    getLatestSiteForecast({ id: user.id, role: user.role }, site.id),
+  ]);
   if (!telemetry) {
     return (
       <section className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-xl flex-col items-center justify-center px-6 py-16 text-center">
@@ -38,5 +48,25 @@ export default async function DashboardPage() {
       </section>
     );
   }
-  return <DashboardOverview snapshot={createDashboardSnapshotFromTelemetry(site, telemetry)} />;
+  return <DashboardOverview snapshot={createDashboardSnapshotFromTelemetry(site, telemetry, weather.observation ? {
+    condition: weather.observation.condition,
+    temperatureAirC: weather.observation.temperatureAirC,
+    shortwaveRadiationWm2: weather.observation.shortwaveRadiationWm2,
+    globalTiltedIrradianceWm2: weather.observation.globalTiltedIrradianceWm2,
+    observedAt: weather.observation.observedAt,
+    fetchedAt: weather.observation.fetchedAt,
+    providerLabel: "Open-Meteo",
+    cloudCoverPct: weather.observation.cloudCoverPct,
+    precipitationMm: weather.observation.precipitationMm,
+    relativeHumidityPct: weather.observation.relativeHumidityPct,
+    windSpeedKmh: weather.observation.windSpeedKmh,
+    forecastPoints: weather.forecastRun?.points.map((point) => ({
+      validAt: point.validAt.toISOString(),
+      condition: point.condition ?? "Unknown",
+      temperatureC: point.temperatureAirC,
+      precipitationProbabilityPct: point.precipitationProbabilityPct,
+      windSpeedKmh: point.windSpeedKmh,
+      irradianceWm2: point.globalTiltedIrradianceWm2 ?? point.shortwaveRadiationWm2,
+    })) ?? [],
+  } : null, now, latestForecast ? summarizeDashboardForecast(latestForecast.points, site.timezone, now) : [], latestForecast?.createdAt ?? null)} autoRefresh />;
 }
