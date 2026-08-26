@@ -5,6 +5,7 @@ import {
   buildFifteenMinuteRollups,
   compareRollupTotals,
   evaluateRetentionDryRun,
+  finalizedRollupCutoff,
   type FifteenMinuteRollup,
 } from "@/lib/telemetry/rollup";
 
@@ -148,6 +149,10 @@ describe("site-local daily telemetry roll-ups", () => {
 });
 
 describe("roll-up reconciliation and retention dry-run", () => {
+  it("reconciles only intervals that have fully closed", () => {
+    expect(finalizedRollupCutoff(new Date("2026-08-26T09:10:54.017Z")).toISOString()).toBe("2026-08-26T09:00:00.000Z");
+  });
+
   it("reports exact energy and coverage mismatches", () => {
     expect(compareRollupTotals(
       { generationWh: 1_000, consumptionWh: 800, importWh: 100, exportWh: 300, batteryChargeWh: 50, batteryDischargeWh: 40, coveredDurationSec: 900 },
