@@ -1,0 +1,57 @@
+{
+  "generatedAt": "2026-08-27T06:00:42.078Z",
+  "status": "PASS",
+  "summary": {
+    "total": 5,
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0
+  },
+  "scenarios": [
+    {
+      "id": "UAT-01",
+      "actor": "USER",
+      "journey": "Authenticate and open the assigned solar site",
+      "criteria": "The seeded user reaches Dashboard and sees the assigned Colombo Home site.",
+      "durationMs": 2602,
+      "observed": "Expected page, role boundary and stored evidence were observed.",
+      "status": "PASS"
+    },
+    {
+      "id": "UAT-02",
+      "actor": "USER",
+      "journey": "Monitor live operation and inspect incidents",
+      "criteria": "Live Monitoring and Alerts load stored, site-scoped operational evidence.",
+      "durationMs": 2815,
+      "observed": "Expected page, role boundary and stored evidence were observed.",
+      "status": "PASS"
+    },
+    {
+      "id": "UAT-03",
+      "actor": "USER",
+      "journey": "Review decision-support and reporting views",
+      "criteria": "AI Forecast, Historical Analytics, Performance and Reports are available from one authenticated journey.",
+      "durationMs": 7870,
+      "observed": "Expected page, role boundary and stored evidence were observed.",
+      "status": "PASS"
+    },
+    {
+      "id": "UAT-04",
+      "actor": "USER",
+      "journey": "Review configuration, account settings and support",
+      "criteria": "Equipment inventory, profile settings and searchable help content remain available to the site owner.",
+      "durationMs": 5134,
+      "observed": "Expected page, role boundary and stored evidence were observed.",
+      "status": "PASS"
+    },
+    {
+      "id": "UAT-05",
+      "actor": "ADMIN",
+      "journey": "Enforce the administrator authorization boundary",
+      "criteria": "A regular user is redirected away from /admin while the seeded administrator can open Admin Console.",
+      "durationMs": 6194,
+      "observed": "Expected page, role boundary and stored evidence were observed.",
+      "status": "PASS"
+    }
+  ]
+}

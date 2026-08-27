@@ -13,6 +13,7 @@
     "test:run": "vitest run --passWithNoTests",
     "test:coverage": "vitest run --coverage --passWithNoTests",
     "test:e2e": "playwright test",
+    "test:uat": "playwright test e2e/uat.spec.ts",
     "check": "npm run lint && npm run typecheck && npm run test:run && npm run build",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",

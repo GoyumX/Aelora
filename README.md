@@ -66,6 +66,7 @@ npm run typecheck
 npm run test:run
 npm run test:coverage
 npm run test:e2e
+npm run test:uat
 npm run build
 ```
 
@@ -76,7 +77,9 @@ are read at runtime and are not stored in the tests. On Windows the suite uses
 installed Google Chrome by default. Set `PLAYWRIGHT_EXECUTABLE_PATH` to select a
 different browser executable. Generated reports are ignored by Git. See
 [`docs/testing/accessibility-responsive.tdd.md`](docs/testing/accessibility-responsive.tdd.md)
-for the latest browser-QA evidence and known manual follow-ups.
+for the browser-QA evidence and
+[`docs/testing/user-acceptance-testing.md`](docs/testing/user-acceptance-testing.md)
+for the USER/ADMIN acceptance scripts and human sign-off checklist.
 
 ## Learn More
 
