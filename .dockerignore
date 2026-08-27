@@ -1,0 +1,17 @@
+.git
+.github
+.next
+node_modules
+.env
+.env.*
+!.env.example
+coverage
+playwright-report
+test-results
+backups
+docs/evidence
+e2e
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+npm-debug.log*
