@@ -1,231 +1,264 @@
 import {
-  Activity,
   ArrowRight,
+  ArrowUpRight,
   BatteryCharging,
-  BrainCircuit,
-  ChartNoAxesCombined,
-  CheckCircle2,
   CloudSun,
   Cpu,
   Gauge,
+  HousePlug,
+  Radio,
   ShieldCheck,
-  Sparkles,
   SunMedium,
   Zap,
 } from "lucide-react";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 
 import { AeloraMark } from "@/components/brand/aelora-mark";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+
+import styles from "./landing.module.css";
 
 export const metadata: Metadata = {
   title: "Solar intelligence for every day",
   description:
-    "Monitor solar performance, understand anomalies, and forecast energy production—even before connecting physical hardware.",
+    "Aelora turns site telemetry, local weather, and AI forecasts into one clear solar-energy workspace.",
 };
 
-const capabilities = [
-  {
-    icon: Activity,
-    title: "Live monitoring",
-    description:
-      "See generation, consumption, grid flow, battery state, and system freshness in one operational view.",
-    accent: "bg-energy/12 text-energy-strong",
-  },
-  {
-    icon: BrainCircuit,
-    title: "AI forecasting",
-    description:
-      "Plan around a 48-hour summary, detailed seven-day outlook, and a clearly labelled monthly estimate.",
-    accent: "bg-forecast/12 text-forecast-strong",
-  },
-  {
-    icon: ChartNoAxesCombined,
-    title: "Performance clarity",
-    description:
-      "Compare expected and actual production, investigate losses, and identify underperforming equipment.",
-    accent: "bg-solar/14 text-solar-strong",
-  },
+const liveMetrics = [
+  { label: "Solar", value: "4.82 kW", icon: SunMedium, tone: "text-[#ffbd45]" },
+  { label: "Home", value: "2.31 kW", icon: HousePlug, tone: "text-[#62b8ff]" },
+  { label: "Battery", value: "+1.06 kW", icon: BatteryCharging, tone: "text-[#8be39d]" },
+  { label: "Grid export", value: "1.45 kW", icon: Zap, tone: "text-[#f4f0e8]" },
 ];
 
-const workflow = [
-  { number: "01", title: "Configure", text: "Add your site, panel array, inverter, and optional battery." },
-  { number: "02", title: "Simulate", text: "Start with a transparent digital twin while physical hardware is unavailable." },
-  { number: "03", title: "Understand", text: "Explore live behavior, forecasts, alerts, and historical performance." },
+const forecastDays = [
+  { day: "MON", energy: "23.8", height: 78 },
+  { day: "TUE", energy: "25.1", height: 88 },
+  { day: "WED", energy: "18.4", height: 52 },
+  { day: "THU", energy: "14.9", height: 36 },
+  { day: "FRI", energy: "20.6", height: 63 },
+  { day: "SAT", energy: "24.2", height: 81 },
+  { day: "SUN", energy: "24.7", height: 85 },
 ];
+
+function EnergyCurve() {
+  return (
+    <svg
+      aria-label="Today’s generation and household demand curve"
+      className="h-auto w-full overflow-visible"
+      role="img"
+      viewBox="0 0 720 270"
+    >
+      <desc>
+        Solar generation rises from sunrise toward midday while household demand remains lower and steadier.
+      </desc>
+      <defs>
+        <linearGradient id="solar-area" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#ffbd45" stopOpacity="0.32" />
+          <stop offset="1" stopColor="#ffbd45" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {[36, 92, 148, 204].map((y) => (
+        <line key={y} stroke="rgba(244,240,232,.11)" strokeWidth="1" x1="32" x2="704" y1={y} y2={y} />
+      ))}
+      <path
+        d="M32 220 C84 220, 104 218, 136 197 C188 164, 214 103, 276 67 C330 35, 394 34, 450 58 C506 81, 536 130, 580 171 C616 204, 653 218, 704 220 L704 236 L32 236 Z"
+        fill="url(#solar-area)"
+      />
+      <path
+        d="M32 220 C84 220, 104 218, 136 197 C188 164, 214 103, 276 67 C330 35, 394 34, 450 58 C506 81, 536 130, 580 171 C616 204, 653 218, 704 220"
+        fill="none"
+        stroke="#ffbd45"
+        strokeLinecap="round"
+        strokeWidth="4"
+      />
+      <path
+        d="M32 190 C92 177, 129 184, 173 174 C231 160, 271 184, 329 170 C389 156, 431 180, 486 165 C544 149, 590 175, 646 159 C670 152, 688 156, 704 150"
+        fill="none"
+        stroke="#62b8ff"
+        strokeDasharray="8 9"
+        strokeLinecap="round"
+        strokeWidth="3"
+      />
+      <circle cx="450" cy="58" fill="#ffbd45" r="6" />
+      <circle cx="450" cy="58" fill="none" opacity=".4" r="12" stroke="#ffbd45" />
+      <text fill="rgba(244,240,232,.48)" fontFamily="monospace" fontSize="12" x="32" y="258">06:00</text>
+      <text fill="rgba(244,240,232,.48)" fontFamily="monospace" fontSize="12" textAnchor="middle" x="366" y="258">12:00</text>
+      <text fill="rgba(244,240,232,.48)" fontFamily="monospace" fontSize="12" textAnchor="end" x="704" y="258">18:00</text>
+      <text fill="#ffbd45" fontFamily="monospace" fontSize="12" x="468" y="51">4.82 kW now</text>
+    </svg>
+  );
+}
 
 export default function HomePage() {
   return (
-    <div className="min-h-dvh overflow-hidden bg-background">
+    <div className="min-h-dvh overflow-hidden bg-[#090b0c] text-[#f4f0e8] selection:bg-[#ffbd45] selection:text-[#17120a]">
       <a
-        className="fixed left-4 top-3 z-50 -translate-y-20 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg transition-transform focus:translate-y-0"
+        className="fixed left-4 top-3 z-50 -translate-y-24 rounded-full bg-[#ffbd45] px-5 py-3 text-sm font-semibold text-[#17120a] shadow-xl transition-transform duration-200 focus:translate-y-0"
         href="#main-content"
       >
         Skip to main content
       </a>
 
-      <header className="absolute inset-x-0 top-0 z-40 border-b border-white/10 bg-[#0b1f3a]/45 text-white backdrop-blur-md">
-        <nav
-          aria-label="Public navigation"
-          className="mx-auto flex h-18 max-w-[90rem] items-center justify-between px-4 sm:px-6 lg:px-8"
-        >
-          <Link className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" href="/">
-            <AeloraMark className="[&>span:last-child]:text-white" />
+      <header className="absolute inset-x-0 top-0 z-40 border-b border-white/10">
+        <nav aria-label="Public navigation" className="mx-auto flex h-20 max-w-[90rem] items-center justify-between px-5 sm:px-8 lg:px-12">
+          <Link className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffbd45]" href="/">
+            <AeloraMark className="[&>span:first-child]:bg-[#ffbd45]/12 [&>span:first-child]:text-[#ffbd45] [&>span:first-child]:ring-[#ffbd45]/25 [&>span:last-child]:text-[#f4f0e8]" />
           </Link>
-          <div className="hidden items-center gap-7 text-sm font-medium text-white/75 md:flex">
-            <a className="transition-colors hover:text-white" href="#capabilities">Capabilities</a>
-            <a className="transition-colors hover:text-white" href="#simulation">Simulation</a>
-            <a className="transition-colors hover:text-white" href="#how-it-works">How it works</a>
+          <div className="hidden items-center gap-8 text-[0.78rem] font-semibold uppercase tracking-[0.14em] text-white/55 md:flex">
+            <a className="transition-colors duration-200 hover:text-white" href="#observe">Observe</a>
+            <a className="transition-colors duration-200 hover:text-white" href="#forecast">Forecast</a>
+            <a className="transition-colors duration-200 hover:text-white" href="#digital-twin">Digital twin</a>
           </div>
-          <div className="flex items-center gap-2">
-            <Link className="rounded-lg px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" href="/sign-in">
-              Sign in
-            </Link>
-            <Link className="hidden rounded-lg bg-white px-4 py-2 text-sm font-semibold text-primary shadow-sm transition-colors hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-solar sm:inline-flex" href="/sign-up">
-              Get started
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link className="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold text-white/75 transition-colors duration-200 hover:bg-white/7 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffbd45]" href="/sign-in">Sign in</Link>
+            <Link className="hidden min-h-11 items-center gap-2 rounded-full bg-[#f4f0e8] px-5 text-sm font-semibold text-[#111314] transition-colors duration-200 hover:bg-[#ffbd45] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffbd45] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090b0c] sm:inline-flex" href="/sign-up">
+              Create account <ArrowUpRight aria-hidden="true" className="size-4" />
             </Link>
           </div>
         </nav>
       </header>
 
       <main id="main-content">
-        <section className="relative flex min-h-[47rem] items-end bg-[#0b1f3a] text-white sm:min-h-[50rem] lg:items-center">
-          <Image
-            alt="Solar panels on a tropical Sri Lankan home at sunrise"
-            className="object-cover object-[64%_center] opacity-78"
-            fill
-            priority
-            sizes="100vw"
-            src="/images/aelora-solar-home-hero.png"
-          />
-          <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,24,48,.97)_0%,rgba(7,24,48,.86)_38%,rgba(7,24,48,.26)_76%,rgba(7,24,48,.12)_100%)]" />
-          <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#0b1f3a]/80 to-transparent" />
-
-          <div className="relative mx-auto w-full max-w-[90rem] px-4 pb-16 pt-36 sm:px-6 sm:pb-20 lg:px-8 lg:py-40">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-semibold tracking-wide text-white/85 backdrop-blur">
-                <Sparkles aria-hidden="true" className="size-3.5 text-solar" />
-                Solar monitoring that starts before your hardware does
+        <section className={`relative border-b border-white/10 pt-20 ${styles.heroGrid}`}>
+          <div aria-hidden="true" className={styles.ambientGlow} />
+          <div className="relative mx-auto grid min-h-[48rem] max-w-[90rem] gap-16 px-5 py-20 sm:px-8 sm:py-24 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:gap-12 lg:px-12 lg:py-28">
+            <div className="relative z-10 max-w-2xl">
+              <div className="flex items-center gap-3 font-mono text-[0.68rem] uppercase tracking-[0.2em] text-white/50">
+                <span className="relative flex size-2">
+                  <span className={`absolute inline-flex size-full rounded-full bg-[#8be39d] opacity-70 ${styles.livePulse}`} />
+                  <span className="relative inline-flex size-2 rounded-full bg-[#8be39d]" />
+                </span>
+                Solar intelligence / Colombo, LK
               </div>
-              <h1 className="mt-7 font-heading text-5xl font-semibold leading-[1.02] tracking-[-0.055em] text-balance sm:text-6xl lg:text-7xl">
-                Turn sunlight into <span className="text-solar">foresight.</span>
+              <h1 className="mt-8 max-w-[11ch] font-heading text-[clamp(4rem,8vw,7.8rem)] font-semibold leading-[0.84] tracking-[-0.075em] text-balance">
+                Read the sun. <span className="text-[#ffbd45]">Run the day.</span>
               </h1>
-              <p className="mt-6 max-w-xl text-lg leading-8 text-white/72 sm:text-xl">
-                Monitor every watt, understand system health, and plan the next seven days with explainable solar forecasts built for your site.
-              </p>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <Link className={cn(buttonVariants({ size: "lg" }), "h-12 bg-solar px-6 text-[#342400] shadow-lg shadow-black/15 hover:bg-solar/90")} href="/sign-up">
-                  Start monitoring <ArrowRight aria-hidden="true" />
+              <p className="mt-8 max-w-xl text-lg leading-8 text-white/62 sm:text-xl">Aelora turns live site telemetry, local weather, and a seven-day AI forecast into one precise energy view.</p>
+              <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+                <Link className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#ffbd45] px-6 text-sm font-semibold text-[#17120a] transition-[background-color,transform] duration-200 hover:-translate-y-0.5 hover:bg-[#ffd071] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#090b0c]" href="/sign-up">
+                  Create your site <ArrowRight aria-hidden="true" className="size-4" />
                 </Link>
-                <a className={cn(buttonVariants({ size: "lg", variant: "outline" }), "h-12 border-white/20 bg-white/8 px-6 text-white hover:bg-white/15 hover:text-white")} href="#how-it-works">
-                  See how it works
-                </a>
-              </div>
-              <ul className="mt-9 flex flex-wrap gap-x-6 gap-y-3 text-sm text-white/68">
-                {[
-                  "No hardware required to begin",
-                  "User and admin access",
-                  "Simulation clearly labelled",
-                ].map((item) => (
-                  <li className="flex items-center gap-2" key={item}>
-                    <CheckCircle2 aria-hidden="true" className="size-4 text-energy" /> {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        <section className="border-b bg-card/70">
-          <div className="mx-auto grid max-w-[90rem] divide-y px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6 lg:px-8">
-            {[
-              [Gauge, "One calm workspace", "Live, historical, and forecast views"],
-              [CloudSun, "Weather-aware", "Conditions tied to energy expectations"],
-              [ShieldCheck, "Site-scoped access", "Private user data and server-side roles"],
-            ].map(([Icon, title, text]) => (
-              <div className="flex items-center gap-4 py-6 sm:px-6 first:pl-0" key={title as string}>
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/8 text-primary"><Icon aria-hidden="true" className="size-5" /></span>
-                <div><p className="font-semibold">{title as string}</p><p className="mt-0.5 text-sm text-muted-foreground">{text as string}</p></div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-[90rem] px-4 py-24 sm:px-6 lg:px-8 lg:py-32" id="capabilities">
-          <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">One energy workspace</p>
-            <h2 className="mt-4 font-heading text-4xl font-semibold tracking-[-0.045em] text-balance sm:text-5xl">Know what your system is doing—and why.</h2>
-            <p className="mt-5 text-lg leading-8 text-muted-foreground">Aelora connects operational readings, weather context, and model output without pretending estimates are measurements.</p>
-          </div>
-          <div className="mt-12 grid gap-5 md:grid-cols-3">
-            {capabilities.map(({ icon: Icon, title, description, accent }) => (
-              <article className="rounded-2xl border bg-card p-7 shadow-sm transition-transform hover:-translate-y-1" key={title}>
-                <span className={cn("grid size-12 place-items-center rounded-2xl", accent)}><Icon aria-hidden="true" className="size-5" /></span>
-                <h3 className="mt-6 font-heading text-xl font-semibold tracking-tight">{title}</h3>
-                <p className="mt-3 leading-7 text-muted-foreground">{description}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="bg-[#0b1f3a] text-white" id="simulation">
-          <div className="mx-auto grid max-w-[90rem] gap-12 px-4 py-24 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:px-8 lg:py-32">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-energy">Digital twin mode</p>
-              <h2 className="mt-4 font-heading text-4xl font-semibold tracking-[-0.045em] text-balance sm:text-5xl">Start without hardware</h2>
-              <p className="mt-5 max-w-xl text-lg leading-8 text-white/68">Your first solar system can run as a transparent simulation using site, equipment, time, and weather assumptions. Later, a real-device adapter can publish the same telemetry contract.</p>
-              <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                {[
-                  [SunMedium, "Solar generation", "Daylight and weather-sensitive output"],
-                  [Zap, "Household demand", "A configurable residential load profile"],
-                  [BatteryCharging, "Battery behavior", "Charge, discharge, reserve, and efficiency"],
-                  [Cpu, "Fault scenarios", "Power cuts and equipment anomalies"],
-                ].map(([Icon, title, text]) => (
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-5" key={title as string}>
-                    <Icon aria-hidden="true" className="size-5 text-solar" />
-                    <h3 className="mt-4 font-semibold">{title as string}</h3>
-                    <p className="mt-1 text-sm leading-6 text-white/55">{text as string}</p>
-                  </div>
-                ))}
+                <Link className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/18 px-6 text-sm font-semibold text-white transition-[border-color,background-color] duration-200 hover:border-white/35 hover:bg-white/7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffbd45]" href="/sign-in">Open your workspace</Link>
               </div>
             </div>
-            <div className="relative mx-auto w-full max-w-xl rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-2xl shadow-black/20">
-              <div className="rounded-2xl border border-white/10 bg-[#102a4c] p-6">
-                <div className="flex items-center justify-between"><div><p className="text-xs text-white/60">Simulated live output</p><p className="mt-1 font-mono text-3xl font-semibold">4.82 kW</p></div><span className="rounded-full bg-energy/20 px-3 py-1 text-xs font-semibold text-[#7ee7a2]">● Healthy</span></div>
-                <div className="mt-8 flex h-40 items-end gap-2" aria-hidden="true">
-                  {[18, 28, 43, 61, 75, 91, 82, 70, 51, 35, 22].map((height, index) => <div className="flex-1 rounded-t bg-gradient-to-t from-energy/35 to-solar" key={index} style={{ height: `${height}%` }} />)}
+
+            <div className="relative mx-auto w-full max-w-3xl lg:translate-x-5">
+              <div aria-hidden="true" className={styles.solarOrbit}><span className={styles.orbitDot} /></div>
+              <div className="relative overflow-hidden rounded-[2rem] border border-white/12 bg-[#111416]/92 p-5 shadow-[0_40px_100px_rgba(0,0,0,.55)] backdrop-blur-xl sm:p-7">
+                <div className="flex items-start justify-between gap-5 border-b border-white/10 pb-6">
+                  <div><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-white/42"><Radio aria-hidden="true" className="size-3.5 text-[#8be39d]" /> Live site</div><p className="mt-2 text-lg font-semibold">Colombo Home</p></div>
+                  <div className="text-right"><p className="font-mono text-xs text-white/40">UPDATED 11:42</p><p className="mt-2 inline-flex items-center gap-2 rounded-full bg-[#8be39d]/10 px-3 py-1 text-xs font-semibold text-[#8be39d]"><span className="size-1.5 rounded-full bg-current" /> All systems online</p></div>
                 </div>
-                <div className="mt-5 grid grid-cols-3 gap-3 border-t border-white/10 pt-5 text-center"><div><p className="text-xs text-white/70">Today</p><p className="mt-1 font-mono font-semibold">18.4 kWh</p></div><div><p className="text-xs text-white/70">Battery</p><p className="mt-1 font-mono font-semibold">76%</p></div><div><p className="text-xs text-white/70">Forecast</p><p className="mt-1 font-mono font-semibold">+8%</p></div></div>
+                <div className="grid grid-cols-2 border-b border-white/10 sm:grid-cols-4">
+                  {liveMetrics.map(({ label, value, icon: Icon, tone }, index) => (
+                    <div className={`py-5 ${index % 2 === 0 ? "pr-4" : "pl-4"} sm:px-4 sm:first:pl-0 sm:last:pr-0`} key={label}>
+                      <div className="flex items-center gap-2 text-xs text-white/40"><Icon aria-hidden="true" className={`size-3.5 ${tone}`} /> {label}</div>
+                      <p className="mt-2 font-mono text-base font-semibold sm:text-lg">{value}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="pt-6">
+                  <div className="mb-2 flex items-center justify-between gap-4"><p className="text-sm font-semibold">Generation vs demand</p><div className="flex gap-4 text-[0.68rem] text-white/44"><span className="flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-[#ffbd45]" /> Solar</span><span className="flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-[#62b8ff]" /> Home</span></div></div>
+                  <EnergyCurve />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative border-t border-white/10">
+            <div className="mx-auto grid max-w-[90rem] divide-y divide-white/10 px-5 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-8 lg:px-12">
+              {[
+                ["01", "Observe", "Every device and energy flow, in context."],
+                ["02", "Anticipate", "Weather-aware forecasts for the next seven days."],
+                ["03", "Act", "Explainable alerts before small losses become large ones."],
+              ].map(([number, title, text]) => (
+                <div className="grid grid-cols-[2.5rem_1fr] gap-3 py-6 sm:px-6 sm:first:pl-0 sm:last:pr-0" key={number}><span className="font-mono text-xs text-[#ffbd45]">{number}</span><div><p className="font-semibold">{title}</p><p className="mt-1 text-sm leading-6 text-white/45">{text}</p></div></div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-[#f2efe7] text-[#111314]" id="observe">
+          <div className="mx-auto max-w-[90rem] px-5 py-24 sm:px-8 lg:px-12 lg:py-32">
+            <div className="grid gap-12 border-b border-black/15 pb-16 lg:grid-cols-[.72fr_1.28fr] lg:items-end">
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-black/65">01 / Live system</p>
+              <h2 className="max-w-4xl font-heading text-4xl font-semibold leading-[0.98] tracking-[-0.055em] text-balance sm:text-6xl lg:text-7xl">Observe the system as it moves.</h2>
+            </div>
+            <div className="grid gap-10 pt-16 lg:grid-cols-[1.2fr_.8fr] lg:items-start">
+              <div className="relative min-h-[31rem] overflow-hidden rounded-[1.75rem] bg-[#101315] p-6 text-[#f4f0e8] sm:p-8">
+                <div className="flex items-center justify-between gap-5"><div><p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-white/65">Energy flow now</p><p className="mt-2 text-xl font-semibold">Midday surplus</p></div><span className="rounded-full border border-[#8be39d]/25 bg-[#8be39d]/8 px-3 py-1.5 text-xs font-semibold text-[#8be39d]">Healthy</span></div>
+                <div className="mt-14 grid grid-cols-3 items-center gap-3 sm:gap-5">
+                  {[
+                    [SunMedium, "Solar", "4.82 kW", "text-[#ffbd45]"],
+                    [HousePlug, "Home", "2.31 kW", "text-[#62b8ff]"],
+                    [BatteryCharging, "Battery", "76%", "text-[#8be39d]"],
+                  ].map(([Icon, label, value, tone]) => (
+                    <div className="flex min-h-36 flex-col justify-between rounded-2xl border border-white/10 bg-white/[.035] p-4 sm:p-5" key={label as string}>
+                      <Icon aria-hidden="true" className={`size-6 ${tone as string}`} />
+                      <div><p className="text-xs text-white/65">{label as string}</p><p className="mt-1 font-mono text-base font-semibold sm:text-xl">{value as string}</p></div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-8 flex items-center justify-between gap-5 border-t border-white/10 pt-6"><p className="max-w-md text-sm leading-6 text-white/50">Generation is covering the home, charging the battery, and exporting the remaining 1.45 kW.</p><Gauge aria-hidden="true" className="size-8 text-[#ffbd45]" /></div>
+              </div>
+              <div className="lg:pl-8">
+                <p className="max-w-lg text-xl leading-8 text-black/62">See generation, household demand, battery state, grid exchange, weather, and device freshness without translating raw telemetry yourself.</p>
+                <dl className="mt-12 divide-y divide-black/15 border-y border-black/15">
+                  {[["30 sec", "Gateway telemetry cadence"], ["Live", "Device online and freshness status"], ["1 view", "Solar, home, battery, and grid context"]].map(([value, label]) => (
+                    <div className="grid grid-cols-[7rem_1fr] gap-5 py-5" key={label}><dt className="font-mono text-lg font-semibold">{value}</dt><dd className="text-sm leading-6 text-black/65">{label}</dd></div>
+                  ))}
+                </dl>
+                <Link className="mt-8 inline-flex min-h-11 items-center gap-2 border-b border-black pb-1 text-sm font-semibold transition-colors duration-200 hover:border-[#d18d00] hover:text-[#9b6700] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1d78bd]" href="/sign-in">Explore the live workspace <ArrowUpRight aria-hidden="true" className="size-4" /></Link>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="mx-auto max-w-[90rem] px-4 py-24 sm:px-6 lg:px-8 lg:py-32" id="how-it-works">
-          <div className="text-center"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">How it works</p><h2 className="mt-4 font-heading text-4xl font-semibold tracking-[-0.045em] sm:text-5xl">From setup to insight in three steps.</h2></div>
-          <ol className="mt-14 grid gap-8 md:grid-cols-3">
-            {workflow.map((step) => (
-              <li className="relative border-t pt-7" key={step.number}><span className="font-mono text-sm font-semibold text-primary">{step.number}</span><h3 className="mt-4 text-xl font-semibold">{step.title}</h3><p className="mt-3 leading-7 text-muted-foreground">{step.text}</p></li>
-            ))}
-          </ol>
+        <section className="relative border-y border-white/10 bg-[#090b0c]" id="forecast">
+          <div className="mx-auto grid max-w-[90rem] gap-16 px-5 py-24 sm:px-8 lg:grid-cols-[.8fr_1.2fr] lg:items-center lg:px-12 lg:py-32">
+            <div>
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-[#62b8ff]">02 / AI forecast</p>
+              <p aria-hidden="true" className="mt-8 font-mono text-[7rem] font-semibold leading-none tracking-[-0.09em] text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,.16)] sm:text-[10rem]">07</p>
+              <h2 className="-mt-8 max-w-xl font-heading text-4xl font-semibold leading-[1] tracking-[-0.055em] text-balance sm:text-6xl">Seven days, translated into decisions.</h2>
+              <p className="mt-7 max-w-lg text-lg leading-8 text-white/55">Aelora combines the latest site history with location-aware weather, then shows what the model expects and how confident it is.</p>
+              <div className="mt-9 flex flex-wrap gap-3 text-xs font-semibold text-white/55"><span className="rounded-full border border-white/12 px-3 py-2">Weather refreshed</span><span className="rounded-full border border-white/12 px-3 py-2">Model online</span><span className="rounded-full border border-white/12 px-3 py-2">Updated 11:00</span></div>
+            </div>
+            <div className="rounded-[1.75rem] border border-white/12 bg-white/[.035] p-5 sm:p-8">
+              <div className="flex items-end justify-between gap-5 border-b border-white/10 pb-7"><div><p className="text-sm text-white/65">Expected this week</p><p className="mt-2 font-mono text-3xl font-semibold sm:text-4xl">151.7 <span className="text-base font-normal text-white/60">kWh</span></p></div><div className="text-right"><p className="text-xs text-white/60">Confidence</p><p className="mt-1 font-mono font-semibold text-[#8be39d]">87%</p></div></div>
+              <div className="mt-8 grid h-64 grid-cols-7 items-end gap-2 sm:gap-4">
+                {forecastDays.map((item) => (
+                  <div className="flex h-full flex-col justify-end" key={item.day}><p className="mb-2 hidden text-center font-mono text-[0.65rem] text-white/45 sm:block">{item.energy}</p><div className="relative flex-1"><div className="absolute inset-x-0 bottom-0 rounded-t-md bg-gradient-to-t from-[#d27c00] to-[#ffbd45]" style={{ height: `${item.height}%` }} /></div><p className="mt-3 text-center font-mono text-[0.62rem] font-semibold text-white/50">{item.day}</p></div>
+                ))}
+              </div>
+              <div className="mt-7 flex items-center justify-between gap-5 border-t border-white/10 pt-6"><div className="flex items-center gap-3"><CloudSun aria-hidden="true" className="size-5 text-[#62b8ff]" /><p className="text-sm text-white/50">Cloud cover reduces Wednesday’s expected yield.</p></div><ArrowUpRight aria-hidden="true" className="size-4 shrink-0 text-white/35" /></div>
+            </div>
+          </div>
         </section>
 
-        <section className="px-4 pb-24 sm:px-6 lg:px-8 lg:pb-32">
-          <div className="relative mx-auto max-w-[90rem] overflow-hidden rounded-[2rem] bg-primary px-6 py-14 text-center text-primary-foreground sm:px-12 sm:py-18">
-            <div aria-hidden="true" className="absolute -right-20 -top-28 size-80 rounded-full bg-solar/15 blur-3xl" />
-            <div className="relative mx-auto max-w-2xl"><h2 className="font-heading text-4xl font-semibold tracking-[-0.045em] text-balance">Ready to understand your solar future?</h2><p className="mt-4 text-lg leading-8 text-primary-foreground/90">Create your account now. The next setup step will build your first simulated site.</p><Link className={cn(buttonVariants({ size: "lg" }), "mt-8 h-12 bg-solar px-6 text-[#342400] hover:bg-solar/90")} href="/sign-up">Create your Aelora account <ArrowRight aria-hidden="true" /></Link></div>
+        <section className="bg-[#ffbd45] text-[#17120a]" id="digital-twin">
+          <div className="mx-auto grid max-w-[90rem] gap-12 px-5 py-24 sm:px-8 lg:grid-cols-[1.15fr_.85fr] lg:items-end lg:px-12 lg:py-28">
+            <div><p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-black/70">03 / Virtual site gateway</p><h2 className="mt-8 max-w-4xl font-heading text-5xl font-semibold leading-[0.92] tracking-[-0.065em] text-balance sm:text-7xl lg:text-8xl">Hardware can come later.</h2></div>
+            <div><p className="text-lg leading-8 text-black/62">Build a virtual panel array, inverter, battery, and grid connection. Change the weather, load, and equipment state; Aelora receives the same telemetry contract a real gateway can use later.</p><div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-black/20 bg-black/20">
+              {[[Cpu, "Real protocol"], [Radio, "Online status"], [ShieldCheck, "Signed requests"], [Zap, "Live scenarios"]].map(([Icon, label]) => (
+                <div className="flex items-center gap-3 bg-[#ffbd45] p-4" key={label as string}><Icon aria-hidden="true" className="size-4.5" /><span className="text-sm font-semibold">{label as string}</span></div>
+              ))}
+            </div></div>
+          </div>
+        </section>
+
+        <section className="bg-[#f2efe7] px-5 py-24 text-[#111314] sm:px-8 lg:px-12 lg:py-32">
+          <div className="mx-auto flex max-w-[90rem] flex-col gap-12 border-t border-black/15 pt-10 lg:flex-row lg:items-end lg:justify-between">
+            <div><p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-black/65">Your solar system, made legible</p><h2 className="mt-7 max-w-4xl font-heading text-5xl font-semibold leading-[0.95] tracking-[-0.06em] text-balance sm:text-7xl">See today clearly. Prepare for tomorrow.</h2></div>
+            <div className="flex shrink-0 flex-col gap-3 sm:flex-row lg:flex-col"><Link className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#111314] px-6 text-sm font-semibold text-white transition-[background-color,transform] duration-200 hover:-translate-y-0.5 hover:bg-[#273035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1d78bd]" href="/sign-up">Create your account <ArrowRight aria-hidden="true" className="size-4" /></Link><Link className="inline-flex min-h-12 items-center justify-center rounded-full border border-black/20 px-6 text-sm font-semibold transition-colors duration-200 hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1d78bd]" href="/sign-in">Sign in</Link></div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t bg-card">
-        <div className="mx-auto flex max-w-[90rem] flex-col gap-5 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <AeloraMark />
-          <p className="text-sm text-muted-foreground">Intelligent solar monitoring, designed in Sri Lanka.</p>
-          <div className="flex gap-5 text-sm"><Link className="hover:text-primary" href="/sign-in">Sign in</Link><Link className="hover:text-primary" href="/sign-up">Create account</Link></div>
+      <footer className="border-t border-white/10 bg-[#090b0c]">
+        <div className="mx-auto grid max-w-[90rem] gap-8 px-5 py-10 sm:grid-cols-[1fr_auto] sm:items-end sm:px-8 lg:px-12">
+          <div><AeloraMark className="[&>span:first-child]:bg-[#ffbd45]/12 [&>span:first-child]:text-[#ffbd45] [&>span:first-child]:ring-[#ffbd45]/25 [&>span:last-child]:text-[#f4f0e8]" /><p className="mt-4 max-w-md text-sm leading-6 text-white/65">Monitoring, forecasting, and system clarity for residential solar sites.</p></div>
+          <div className="sm:text-right"><p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-white/60">Designed and built in Sri Lanka</p><p className="mt-3 text-xs text-white/60">© 2026 Aelora</p></div>
         </div>
       </footer>
     </div>

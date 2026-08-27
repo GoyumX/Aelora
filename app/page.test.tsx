@@ -10,10 +10,10 @@ describe("Aelora landing page", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: /turn sunlight into foresight/i,
+        name: /read the sun\. run the day\./i,
       }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Start monitoring" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Create your site" })).toHaveAttribute(
       "href",
       "/sign-up",
     );
@@ -27,16 +27,16 @@ describe("Aelora landing page", () => {
   it("explains monitoring, forecasting, and simulated data", () => {
     render(<HomePage />);
 
-    expect(screen.getByRole("heading", { name: "Live monitoring" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "AI forecasting" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Start without hardware" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Observe the system as it moves." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Seven days, translated into decisions." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Hardware can come later." })).toBeInTheDocument();
   });
 
-  it("provides meaningful alternative text for the solar-home hero", () => {
+  it("gives the energy curve an accessible description", () => {
     render(<HomePage />);
 
     expect(
-      screen.getByAltText("Solar panels on a tropical Sri Lankan home at sunrise"),
+      screen.getByRole("img", { name: "Today’s generation and household demand curve" }),
     ).toBeInTheDocument();
   });
 });

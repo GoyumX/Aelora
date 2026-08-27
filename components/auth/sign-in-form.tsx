@@ -60,13 +60,13 @@ export function SignInForm() {
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-4">
           <Label htmlFor="password">Password</Label>
-          <Link className="text-sm font-medium text-primary hover:underline" href="/forgot-password">
+          <Link className="rounded-sm text-sm font-semibold text-[#875b00] underline-offset-4 transition-colors duration-200 hover:text-[#5f4000] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1d78bd]" href="/forgot-password">
             Forgot password?
           </Link>
         </div>
         <Input aria-describedby={invalidField === "password" ? "sign-in-error" : undefined} aria-invalid={invalidField === "password" || undefined} autoComplete="current-password" id="password" name="password" ref={passwordRef} type="password" />
       </div>
-      {error && <p className="text-sm text-destructive" id="sign-in-error" role="alert">{error}</p>}
+      {error && <p className="rounded-xl border border-red-600/20 bg-red-50 px-4 py-3 text-sm text-red-700" id="sign-in-error" role="alert">{error}</p>}
       <Button className="w-full" disabled={pending} type="submit">
         {pending ? "Signing in…" : "Sign in"}
       </Button>

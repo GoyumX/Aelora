@@ -4,13 +4,12 @@ import { describe, expect, it } from "vitest";
 import AuthLayout from "@/app/(auth)/layout";
 
 describe("AuthLayout", () => {
-  it("shows the solar-intelligence artwork as decorative context", () => {
-    const { container } = render(<AuthLayout>Authentication form</AuthLayout>);
+  it("frames authentication with live product context", () => {
+    render(<AuthLayout>Authentication form</AuthLayout>);
 
     expect(screen.getByText("Authentication form")).toBeInTheDocument();
-    expect(container.querySelector('img[src*="aelora-auth-energy"]')).toHaveAttribute(
-      "alt",
-      "",
-    );
+    expect(screen.getByText("Solar intelligence, without the noise.")).toBeInTheDocument();
+    expect(screen.getByText("Colombo Home")).toBeInTheDocument();
+    expect(screen.getByText(/4\.82/)).toBeInTheDocument();
   });
 });
