@@ -83,6 +83,7 @@ export const gatewayHeartbeatSchema = z.object({
   sentAt: timestamp,
   softwareVersion: z.string().trim().min(1).max(80),
   publishingEnabled: z.boolean(),
+  publishIntervalSec: z.number().int().min(10).max(3_600).optional(),
   queueDepth: z.number().int().nonnegative().max(100_000),
   deviceCount: z.number().int().nonnegative().max(256),
 });

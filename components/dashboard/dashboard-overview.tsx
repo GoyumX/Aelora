@@ -4,15 +4,21 @@ import {
   BatteryCharging,
   BrainCircuit,
   CloudSun,
+  CloudRain,
+  Droplets,
   Gauge,
   House,
   Lightbulb,
+  MapPin,
   SunMedium,
   UtilityPole,
+  Wind,
   Zap,
 } from "lucide-react";
 import Link from "next/link";
 
+import { InteractivePowerChart } from "@/components/charts/interactive-power-chart";
+import { DynamicDataControls } from "@/components/shared/dynamic-data-controls";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { DashboardSnapshot } from "@/lib/dashboard/snapshot";
@@ -24,15 +30,16 @@ function powerFlowLabel(value: number) {
   return "Grid neutral";
 }
 
-function linePoints(values: number[], max: number) {
-  return values
-    .map((value, index) => `${24 + (index / Math.max(1, values.length - 1)) * 552},${190 - (value / max) * 150}`)
-    .join(" ");
+function weatherIcon(condition: string, className: string) {
+  return condition.toLowerCase().includes("rain")
+    ? <CloudRain aria-hidden="true" className={className} />
+    : condition.toLowerCase().includes("cloud")
+      ? <CloudSun aria-hidden="true" className={className} />
+      : <SunMedium aria-hidden="true" className={className} />;
 }
 
-export function DashboardOverview({ snapshot }: { snapshot: DashboardSnapshot }) {
+export function DashboardOverview({ autoRefresh = false, snapshot }: { autoRefresh?: boolean; snapshot: DashboardSnapshot }) {
   const { metrics } = snapshot;
-  const maxChartValue = Math.max(6, ...snapshot.intraday.flatMap((point) => [point.generationKw, point.consumptionKw]));
   const metricCards = [
     { label: "Current solar", value: `${metrics.pvPowerKw.toFixed(2)} kW`, detail: "AC output now", icon: SunMedium, color: "text-solar-strong bg-solar/15" },
     { label: "Energy today", value: `${metrics.energyTodayKwh.toFixed(1)} kWh`, detail: "Since sunrise", icon: Activity, color: "text-primary bg-primary/10" },
@@ -40,6 +47,29 @@ export function DashboardOverview({ snapshot }: { snapshot: DashboardSnapshot })
     { label: "Battery", value: `${metrics.batterySocPct}%`, detail: metrics.batteryPowerKw < 0 ? `Charging ${Math.abs(metrics.batteryPowerKw).toFixed(2)} kW` : `Discharging ${metrics.batteryPowerKw.toFixed(2)} kW`, icon: BatteryCharging, color: "text-energy-strong bg-energy/12" },
     { label: "Grid flow", value: powerFlowLabel(metrics.gridPowerKw), detail: "Negative means export", icon: UtilityPole, color: "text-primary bg-primary/10" },
   ];
+  const timezone = snapshot.site.timezone;
+  const chartTime = (value: string) => new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: timezone,
+  }).format(new Date(value));
+  const chartDate = (value: string) => new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: timezone,
+  }).format(new Date(value));
+  const chartMiddle = new Date((new Date(snapshot.dayWindow.startAt).getTime() + new Date(snapshot.dayWindow.endAt).getTime()) / 2).toISOString();
+  const dashboardChartPoints = snapshot.intraday.map((point) => ({
+    id: point.observedAt,
+    dateTime: point.observedAt,
+    axisLabel: chartTime(point.observedAt),
+    tooltipLabel: `${chartDate(point.observedAt)} · ${chartTime(point.observedAt)}`,
+    generation: point.generationKw,
+    consumption: point.consumptionKw,
+    breakBefore: point.gapBefore,
+  }));
 
   return (
     <div className="mx-auto flex w-full max-w-[100rem] flex-col gap-6 px-4 py-7 sm:px-6 sm:py-9 lg:px-8">
@@ -55,7 +85,7 @@ export function DashboardOverview({ snapshot }: { snapshot: DashboardSnapshot })
         </div>
         <div className="text-sm text-muted-foreground sm:text-right">
           <p>Snapshot updated</p>
-          <time dateTime={snapshot.observedAt}>{new Intl.DateTimeFormat("en-LK", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Colombo" }).format(new Date(snapshot.observedAt))}</time>
+          <time dateTime={snapshot.observedAt}>{new Intl.DateTimeFormat("en-LK", { dateStyle: "medium", timeStyle: "short", timeZone: timezone }).format(new Date(snapshot.observedAt))}</time>
         </div>
       </section>
 
@@ -72,52 +102,72 @@ export function DashboardOverview({ snapshot }: { snapshot: DashboardSnapshot })
         ))}
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(21rem,.75fr)]">
-        <Card className="shadow-xs">
+      <div className="space-y-6">
+        <Card className="mx-auto w-full max-w-6xl shadow-xs" data-testid="dashboard-observed-power-card">
           <CardHeader>
-            <CardTitle><h2>Today&apos;s energy profile</h2></CardTitle>
-            <CardDescription>Stored gateway samples for solar generation and household consumption.</CardDescription>
+            <CardTitle><h2>Recent observed power</h2></CardTitle>
           </CardHeader>
-          <CardContent>
-            <svg aria-label="Intraday solar generation and household consumption" className="h-auto w-full" role="img" viewBox="0 0 600 230">
-              <title>Intraday solar generation and household consumption</title>
-              <desc>Amber shows simulated solar power. Blue shows household demand from 06:00 to 18:00.</desc>
-              {[40, 90, 140, 190].map((y) => <line className="stroke-border" key={y} x1="24" x2="576" y1={y} y2={y} />)}
-              <polyline className="fill-none stroke-solar [stroke-width:4]" points={linePoints(snapshot.intraday.map((point) => point.generationKw), maxChartValue)} strokeLinecap="round" strokeLinejoin="round" />
-              <polyline className="fill-none stroke-primary [stroke-width:3]" points={linePoints(snapshot.intraday.map((point) => point.consumptionKw), maxChartValue)} strokeDasharray="7 7" strokeLinecap="round" strokeLinejoin="round" />
-              <text className="fill-muted-foreground text-[11px]" x="24" y="218">06:00</text>
-              <text className="fill-muted-foreground text-[11px]" textAnchor="middle" x="300" y="218">12:00</text>
-              <text className="fill-muted-foreground text-[11px]" textAnchor="end" x="576" y="218">18:00</text>
-            </svg>
+          <CardContent className="overflow-hidden">
+            <InteractivePowerChart
+              ariaLabel="Intraday solar generation and household consumption"
+              axisTicks={[
+                { label: "00:00", position: 0 },
+                { label: chartTime(chartMiddle), position: 0.5 },
+                { label: chartTime(snapshot.dayWindow.endAt), position: 1 },
+              ]}
+              description="Amber shows observed solar power. Blue shows observed household demand from midnight through the latest stored reading."
+              domain={snapshot.dayWindow}
+              points={dashboardChartPoints}
+              seriesLabels={{ generation: "Generated", consumption: "Consumed" }}
+              unit="kW"
+              xAxisLabel={`Site local time (${timezone})`}
+            />
             <div className="mt-3 flex flex-wrap gap-5 text-xs text-muted-foreground"><span className="flex items-center gap-2"><span className="size-2.5 rounded-full bg-solar" />Solar generation</span><span className="flex items-center gap-2"><span className="size-2.5 rounded-full bg-primary" />Home consumption</span></div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-xs">
-          <CardHeader><CardTitle><h2>Weather & solar conditions</h2></CardTitle><CardDescription>Conditions reported by the site gateway.</CardDescription></CardHeader>
-          <CardContent className="space-y-5">
-            <div className="flex items-center gap-4"><span className="grid size-14 place-items-center rounded-2xl bg-solar/15 text-solar-strong"><CloudSun aria-hidden="true" className="size-7" /></span><div><p className="text-lg font-semibold">{metrics.weather.condition}</p><p className="text-sm text-muted-foreground">{metrics.weather.temperatureC}°C panel temperature</p></div></div>
-            <dl className="grid grid-cols-2 gap-3"><div className="rounded-xl bg-muted/70 p-4"><dt className="text-xs text-muted-foreground">Irradiance</dt><dd className="mt-1 font-mono text-lg font-semibold">{metrics.weather.irradianceWm2} W/m²</dd></div><div className="rounded-xl bg-muted/70 p-4"><dt className="text-xs text-muted-foreground">Site state</dt><dd className="mt-1 text-lg font-semibold capitalize">{snapshot.site.status.toLowerCase()}</dd></div></dl>
-            <Link className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline" href="/live-monitoring">Open live monitoring <ArrowRight aria-hidden="true" className="size-4" /></Link>
+        <Card className="overflow-hidden shadow-xs" data-testid="dashboard-weather-landscape">
+          <CardHeader>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div><CardTitle><h2>Weather & solar conditions</h2></CardTitle><CardDescription>Site-specific Open-Meteo context from the coordinates in System Configuration.</CardDescription></div>
+              <Badge variant="outline" className={metrics.weather.freshness === "STALE" ? "border-alert-warning/30 bg-alert-warning/10 text-solar-strong" : "border-primary/20 bg-primary/8 text-primary"}>
+                {metrics.weather.freshness === "FRESH" ? "Fresh" : metrics.weather.freshness === "STALE" ? "Stale" : "Gateway fallback"}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-5 xl:grid-cols-[minmax(20rem,.68fr)_minmax(0,1.32fr)]">
+            <div className="space-y-4">
+            <div className="rounded-2xl bg-[linear-gradient(135deg,var(--primary),color-mix(in_oklab,var(--primary)_68%,black))] p-5 text-primary-foreground">
+              <div className="flex items-start justify-between gap-4"><div><p className="text-5xl font-semibold tracking-[-0.05em]">{metrics.weather.temperatureC}°</p><p className="mt-2 font-semibold">{metrics.weather.condition}</p><p className="mt-1 text-xs text-primary-foreground/80">{metrics.weather.temperatureLabel}</p></div>{weatherIcon(metrics.weather.condition, "size-14 text-solar drop-shadow-sm")}</div>
+              <div className="mt-5 grid grid-cols-2 gap-3 border-t border-primary-foreground/20 pt-4"><div><p className="text-xs text-primary-foreground/80">{metrics.weather.irradianceLabel}</p><p className="mt-1 font-mono text-xl font-semibold">{metrics.weather.irradianceWm2} W/m²</p></div><div className="text-right"><p className="text-xs text-primary-foreground/80">Rain chance</p><p className="mt-1 font-mono text-xl font-semibold">{metrics.weather.hourly[0]?.precipitationProbabilityPct ?? metrics.weather.cloudCoverPct ?? 0}%</p></div></div>
+            </div>
+            <dl className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-3">
+              <div className="rounded-xl border bg-muted/35 p-3"><Droplets aria-hidden="true" className="size-4 text-primary" /><dt className="mt-2 text-[11px] text-muted-foreground">Humidity</dt><dd className="mt-0.5 text-sm font-semibold">{metrics.weather.relativeHumidityPct == null ? "—" : `${metrics.weather.relativeHumidityPct}%`}</dd></div>
+              <div className="rounded-xl border bg-muted/35 p-3"><CloudRain aria-hidden="true" className="size-4 text-primary" /><dt className="mt-2 text-[11px] text-muted-foreground">Cloud / rain</dt><dd className="mt-0.5 text-sm font-semibold">{metrics.weather.cloudCoverPct == null ? "—" : `${metrics.weather.cloudCoverPct}% · ${metrics.weather.precipitationMm ?? 0} mm`}</dd></div>
+              <div className="rounded-xl border bg-muted/35 p-3"><Wind aria-hidden="true" className="size-4 text-primary" /><dt className="mt-2 text-[11px] text-muted-foreground">Wind</dt><dd className="mt-0.5 text-sm font-semibold">{metrics.weather.windSpeedKmh == null ? "—" : `${metrics.weather.windSpeedKmh} km/h`}</dd></div>
+            </dl>
+            </div>
+            <div className="space-y-5">
+            {metrics.weather.hourly.length ? <div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Next 12 hours</p><div aria-label="Hourly weather forecast" className="flex gap-2 overflow-x-auto pb-2" role="region" tabIndex={0}>{metrics.weather.hourly.map((point) => <div className="min-w-20 rounded-xl border bg-muted/25 p-3 text-center" key={point.validAt}><time className="text-xs text-muted-foreground" dateTime={point.validAt}>{chartTime(point.validAt)}</time>{weatherIcon(point.condition, "mx-auto my-2 size-5 text-solar-strong")}<p className="text-sm font-semibold">{point.temperatureC == null ? "—" : `${Math.round(point.temperatureC)}°`}</p><p className="mt-1 text-[10px] text-muted-foreground">{point.precipitationProbabilityPct ?? 0}% rain</p></div>)}</div></div> : null}
+            {metrics.weather.daily.length ? <div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Seven-day weather</p><div className="grid grid-cols-4 gap-2 sm:grid-cols-7">{metrics.weather.daily.map((day) => <div className="rounded-xl border p-2 text-center" key={day.dateKey}><p className="text-xs font-semibold">{day.label}</p>{weatherIcon(day.condition, "mx-auto my-2 size-5 text-solar-strong")}<p className="text-xs">{day.temperatureMaxC == null ? "—" : Math.round(day.temperatureMaxC)}° <span className="text-muted-foreground">{day.temperatureMinC == null ? "—" : Math.round(day.temperatureMinC)}°</span></p></div>)}</div></div> : null}
+            </div>
+            <div className="grid gap-3 border-t pt-4 xl:col-span-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+              <div className="space-y-2">
+                <div className="rounded-xl border border-dashed p-3 text-xs leading-5 text-muted-foreground"><p className="flex items-start gap-2"><MapPin aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-primary" /><span>Location from System Configuration · {snapshot.site.latitude?.toFixed(4) ?? "—"}, {snapshot.site.longitude?.toFixed(4) ?? "—"} · {timezone}</span></p></div>
+                <div className="text-xs leading-5 text-muted-foreground"><p>{metrics.weather.sourceLabel} · fetched <time dateTime={metrics.weather.fetchedAt}>{new Intl.DateTimeFormat("en-LK", { dateStyle: "medium", timeStyle: "short", timeZone: timezone }).format(new Date(metrics.weather.fetchedAt))}</time></p>{metrics.weather.source === "OPEN_METEO" ? <a className="font-medium text-primary hover:underline" href="https://open-meteo.com/" rel="noreferrer" target="_blank">Weather data by Open-Meteo.com</a> : null}</div>
+              </div>
+              <DynamicDataControls autoRefresh={autoRefresh} compact siteId={snapshot.site.id} weatherFetchedAt={metrics.weather.fetchedAt} />
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,.9fr)]">
+      <div>
         <Card className="shadow-xs">
-          <CardHeader><CardTitle><h2>Energy flow now</h2></CardTitle><CardDescription>Positive grid values mean import; negative values mean export.</CardDescription></CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[{ icon: SunMedium, label: "Solar", value: `${metrics.pvPowerKw.toFixed(2)} kW`, tone: "bg-solar/15 text-solar-strong" }, { icon: House, label: "Home", value: `${metrics.loadPowerKw.toFixed(2)} kW`, tone: "bg-primary/10 text-primary" }, { icon: BatteryCharging, label: "Battery", value: `${metrics.batterySocPct}%`, tone: "bg-energy/12 text-energy-strong" }, { icon: UtilityPole, label: "Grid", value: powerFlowLabel(metrics.gridPowerKw), tone: "bg-forecast/12 text-forecast-strong" }].map(({ icon: Icon, label, value, tone }) => <div className="rounded-xl border p-4" key={label}><span className={cn("grid size-9 place-items-center rounded-lg", tone)}><Icon aria-hidden="true" className="size-4.5" /></span><p className="mt-4 text-xs text-muted-foreground">{label}</p><p className="mt-1 font-semibold">{value}</p></div>)}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-xs">
-          <CardHeader><CardTitle><h2>48-hour AI forecast</h2></CardTitle><CardDescription>Early planning summary; open the forecast page for hourly detail.</CardDescription></CardHeader>
+          <CardHeader><div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div><CardTitle><h2>48-hour AI forecast</h2></CardTitle><CardDescription className="mt-1">A rolling now-to-48-hours window, recalculated on each hourly page update from the latest stored model run.</CardDescription></div><Badge variant="outline">Hourly rolling view</Badge></div></CardHeader>
           <CardContent className="space-y-3">
-            {snapshot.forecast.length === 0 ? <p className="rounded-xl border border-dashed p-4 text-sm leading-6 text-muted-foreground">Forecast output is intentionally withheld until the trained model service is connected. Live gateway data is already being collected for that pipeline.</p> : null}
-            {snapshot.forecast.map((day) => <div className="flex items-center justify-between gap-4 rounded-xl border p-4" key={day.label}><div><p className="font-semibold">{day.label}</p><p className="text-sm text-muted-foreground">{day.condition} · {day.confidencePct}% confidence</p></div><div className="text-right"><p className="font-mono text-lg font-semibold">{day.predictedEnergyKwh.toFixed(1)} kWh</p><p className="text-xs text-muted-foreground">predicted</p></div></div>)}
+            {snapshot.forecast.length === 0 ? <p className="rounded-xl border border-dashed p-4 text-sm leading-6 text-muted-foreground">No stored AI forecast is available yet. Sync the site weather and generate a forecast to add the next 48-hour planning summary.</p> : null}
+            <div className="grid gap-3 sm:grid-cols-2">{snapshot.forecast.map((day, index) => <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-solar/12 via-card to-primary/5 p-5" key={day.label}><div className="absolute right-3 top-3 text-5xl font-semibold text-solar/10">0{index + 1}</div><SunMedium aria-hidden="true" className="size-6 text-solar-strong" /><p className="mt-4 font-semibold">{day.label}</p><p className="mt-1 text-xs text-muted-foreground">Random Forest · weather-informed</p><p className="mt-5 font-mono text-2xl font-semibold">{day.predictedEnergyKwh.toFixed(1)} kWh</p><p className="text-xs text-muted-foreground">predicted generation</p></div>)}</div>
             <Link className="inline-flex items-center gap-2 pt-2 text-sm font-semibold text-primary hover:underline" href="/ai-forecast">View full AI forecast <ArrowRight aria-hidden="true" className="size-4" /></Link>
           </CardContent>
         </Card>

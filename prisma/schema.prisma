@@ -102,21 +102,97 @@ enum TelemetryBatchStatus {
   REJECTED
 }
 
+enum WeatherProvider {
+  OPEN_METEO
+}
+
+enum SolarForecastSource {
+  MODEL
+}
+
+enum ForecastActualQuality {
+  SIMULATED
+  MEASURED
+  ESTIMATED
+  MIXED
+}
+
+enum AlertType {
+  GRID_OUTAGE
+  GATEWAY_OFFLINE
+  DEVICE_OFFLINE
+  INVERTER_FAULT
+  BATTERY_LOW
+  PV_UNDERPERFORMANCE
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum AlertStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+enum AlertEvidenceQuality {
+  SIMULATED
+  MEASURED
+  MIXED
+}
+
+enum ReportType {
+  WEEKLY
+  MONTHLY
+}
+
+enum SupportTicketCategory {
+  TECHNICAL
+  ACCOUNT
+  DATA_FORECAST
+  FEATURE_REQUEST
+}
+
+enum SupportTicketPriority {
+  NORMAL
+  HIGH
+}
+
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum AdminAuditAction {
+  USER_STATUS_CHANGED
+  SUPPORT_TICKET_UPDATED
+}
+
 model User {
-  id            String          @id @default(cuid())
-  name          String
-  email         String          @unique
-  emailVerified Boolean         @default(false)
-  image         String?
-  role          UserRole        @default(USER)
-  status        UserStatus      @default(ACTIVE)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  deletedAt     DateTime?
-  accounts      Account[]
-  sessions      Session[]
-  preference    UserPreference?
-  ownedSites    SolarSite[]
+  id                 String           @id @default(cuid())
+  name               String
+  username           String?          @unique
+  email              String           @unique
+  emailVerified      Boolean          @default(false)
+  image              String?
+  role               UserRole         @default(USER)
+  status             UserStatus       @default(ACTIVE)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  deletedAt          DateTime?
+  accounts           Account[]
+  sessions           Session[]
+  preference         UserPreference?
+  ownedSites         SolarSite[]
+  generatedReports   ReportSnapshot[]
+  supportTickets     SupportTicket[]
+  adminActions       AdminAuditLog[]  @relation("AdminAuditActor")
+  adminTargetActions AdminAuditLog[]  @relation("AdminAuditTargetUser")
 
   @@index([status, createdAt])
   @@index([deletedAt, createdAt])
@@ -185,27 +261,268 @@ model UserPreference {
 }
 
 model SolarSite {
-  id        String             @id @default(cuid())
-  ownerId   String
-  name      String
-  slug      String             @unique
-  latitude  Float
-  longitude Float
-  timezone  String             @default("Asia/Colombo")
-  mode      SiteMode           @default(SIMULATED)
-  status    SiteStatus         @default(ACTIVE)
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  deletedAt DateTime?
-  owner     User               @relation(fields: [ownerId], references: [id], onDelete: Restrict)
-  arrays    SolarArray[]
-  inverters Inverter[]
-  battery   Battery?
-  telemetry TelemetryReading[]
-  gateways  EdgeGateway[]
+  id                  String                    @id @default(cuid())
+  ownerId             String
+  name                String
+  slug                String                    @unique
+  latitude            Float
+  longitude           Float
+  timezone            String                    @default("Asia/Colombo")
+  mode                SiteMode                  @default(SIMULATED)
+  status              SiteStatus                @default(ACTIVE)
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  deletedAt           DateTime?
+  owner               User                      @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  arrays              SolarArray[]
+  inverters           Inverter[]
+  battery             Battery?
+  telemetry           TelemetryReading[]
+  telemetryRollups15m TelemetryRollup15Minute[]
+  telemetryRollupsDay TelemetryRollupDaily[]
+  gateways            EdgeGateway[]
+  weatherObservations WeatherObservation[]
+  weatherForecastRuns WeatherForecastRun[]
+  solarForecastRuns   SolarForecastRun[]
+  alertIncidents      AlertIncident[]
+  reportSnapshots     ReportSnapshot[]
+  supportTickets      SupportTicket[]
 
   @@index([ownerId, status])
   @@index([ownerId, createdAt])
+}
+
+model AlertIncident {
+  id               String               @id @default(cuid())
+  siteId           String
+  openKey          String?              @unique
+  type             AlertType
+  severity         AlertSeverity
+  status           AlertStatus          @default(ACTIVE)
+  title            String
+  summary          String
+  evidenceQuality  AlertEvidenceQuality
+  evidence         Json
+  firstDetectedAt  DateTime
+  lastDetectedAt   DateTime
+  occurrenceCount  Int                  @default(1)
+  acknowledgedAt   DateTime?
+  acknowledgedById String?
+  resolvedAt       DateTime?
+  resolvedById     String?
+  resolutionReason String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  site             SolarSite            @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId, status, lastDetectedAt(sort: Desc)])
+  @@index([siteId, type, firstDetectedAt(sort: Desc)])
+  @@index([siteId, severity, status])
+}
+
+model ReportSnapshot {
+  id            String     @id @default(cuid())
+  siteId        String
+  generatedById String?
+  type          ReportType
+  periodStartAt DateTime
+  periodEndAt   DateTime
+  generatedAt   DateTime   @default(now())
+  schemaVersion String
+  dataHash      String
+  payload       Json
+  site          SolarSite  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  generatedBy   User?      @relation(fields: [generatedById], references: [id], onDelete: SetNull)
+
+  @@unique([siteId, type, periodStartAt, periodEndAt, dataHash])
+  @@index([siteId, generatedAt(sort: Desc)])
+  @@index([siteId, type, periodStartAt(sort: Desc)])
+  @@index([generatedById])
+}
+
+model SupportTicket {
+  id            String                @id @default(cuid())
+  userId        String
+  siteId        String?
+  category      SupportTicketCategory
+  priority      SupportTicketPriority @default(NORMAL)
+  status        SupportTicketStatus   @default(OPEN)
+  subject       String
+  message       String
+  adminResponse String?
+  respondedAt   DateTime?
+  resolvedAt    DateTime?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  site          SolarSite?            @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  auditLogs     AdminAuditLog[]
+
+  @@index([userId, updatedAt(sort: Desc)])
+  @@index([status, priority, createdAt])
+  @@index([siteId, status])
+}
+
+model AdminAuditLog {
+  id              String           @id @default(cuid())
+  actorId         String?
+  targetUserId    String?
+  supportTicketId String?
+  action          AdminAuditAction
+  summary         String
+  metadata        Json
+  createdAt       DateTime         @default(now())
+  actor           User?            @relation("AdminAuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  targetUser      User?            @relation("AdminAuditTargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+  supportTicket   SupportTicket?   @relation(fields: [supportTicketId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt(sort: Desc)])
+  @@index([actorId, createdAt(sort: Desc)])
+  @@index([targetUserId, createdAt(sort: Desc)])
+  @@index([supportTicketId, createdAt(sort: Desc)])
+}
+
+model WeatherObservation {
+  id                        String          @id @default(cuid())
+  siteId                    String
+  provider                  WeatherProvider
+  observedAt                DateTime
+  fetchedAt                 DateTime        @default(now())
+  condition                 String
+  temperatureAirC           Float
+  apparentTemperatureC      Float?
+  relativeHumidityPct       Int?
+  cloudCoverPct             Int?
+  precipitationMm           Float?
+  weatherCode               Int
+  windSpeedKmh              Float?
+  windDirectionDeg          Int?
+  shortwaveRadiationWm2     Float?
+  directRadiationWm2        Float?
+  diffuseRadiationWm2       Float?
+  directNormalIrradianceWm2 Float?
+  globalTiltedIrradianceWm2 Float?
+  isDay                     Boolean?
+  raw                       Json?
+  site                      SolarSite       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, provider, observedAt])
+  @@index([siteId, observedAt(sort: Desc)])
+  @@index([siteId, provider, fetchedAt(sort: Desc)])
+}
+
+model WeatherForecastRun {
+  id                       String                 @id @default(cuid())
+  siteId                   String
+  provider                 WeatherProvider
+  modelSelection           String                 @default("best_match")
+  fetchedAt                DateTime               @default(now())
+  forecastDays             Int
+  requestLatitude          Float
+  requestLongitude         Float
+  requestTimezone          String
+  requestTiltDeg           Float?
+  requestAzimuthDeg        Float?
+  responseTimezone         String?
+  responseUtcOffsetSeconds Int?
+  generationTimeMs         Float?
+  attribution              String                 @default("Weather data by Open-Meteo.com")
+  rawMetadata              Json?
+  site                     SolarSite              @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  points                   WeatherForecastPoint[]
+  solarForecastRuns        SolarForecastRun[]
+
+  @@unique([siteId, provider, fetchedAt])
+  @@index([siteId, fetchedAt(sort: Desc)])
+  @@index([siteId, provider, fetchedAt(sort: Desc)])
+}
+
+model WeatherForecastPoint {
+  id                          String             @id @default(cuid())
+  weatherForecastRunId        String
+  validAt                     DateTime
+  condition                   String
+  temperatureAirC             Float?
+  relativeHumidityPct         Int?
+  cloudCoverPct               Int?
+  precipitationProbabilityPct Int?
+  precipitationMm             Float?
+  windSpeedKmh                Float?
+  weatherCode                 Int?
+  shortwaveRadiationWm2       Float?
+  directRadiationWm2          Float?
+  diffuseRadiationWm2         Float?
+  directNormalIrradianceWm2   Float?
+  globalTiltedIrradianceWm2   Float?
+  forecastRun                 WeatherForecastRun @relation(fields: [weatherForecastRunId], references: [id], onDelete: Cascade)
+
+  @@unique([weatherForecastRunId, validAt])
+  @@index([validAt])
+}
+
+model SolarForecastRun {
+  id                          String               @id @default(cuid())
+  siteId                      String
+  weatherForecastRunId        String
+  requestId                   String               @unique
+  issuedAt                    DateTime
+  installedCapacityKwp        Float
+  modelName                   String
+  modelFamily                 String
+  modelStatus                 String
+  artifactSha256              String
+  featureSchemaVersion        String
+  productionActivationAllowed Boolean              @default(false)
+  estimatedEnergyKwh          Float
+  estimatedLoadEnergyKwh      Float?
+  loadForecastMethod          String?
+  daylightHours               Int
+  limitations                 Json
+  createdAt                   DateTime             @default(now())
+  site                        SolarSite            @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  weatherForecastRun          WeatherForecastRun   @relation(fields: [weatherForecastRunId], references: [id], onDelete: Restrict)
+  points                      SolarForecastPoint[]
+
+  @@index([siteId, createdAt(sort: Desc)])
+  @@index([weatherForecastRunId])
+}
+
+model SolarForecastPoint {
+  id                     String                     @id @default(cuid())
+  solarForecastRunId     String
+  validAt                DateTime
+  leadHours              Float
+  capacityFactor         Float
+  estimatedPowerKw       Float
+  estimatedEnergyKwh     Float
+  estimatedLoadPowerKw   Float?
+  estimatedLoadEnergyKwh Float?
+  source                 SolarForecastSource        @default(MODEL)
+  forecastRun            SolarForecastRun           @relation(fields: [solarForecastRunId], references: [id], onDelete: Cascade)
+  verification           SolarForecastVerification?
+
+  @@unique([solarForecastRunId, validAt])
+  @@index([validAt])
+}
+
+model SolarForecastVerification {
+  id                   String                @id @default(cuid())
+  solarForecastPointId String                @unique
+  intervalStartAt      DateTime
+  intervalEndAt        DateTime
+  actualEnergyKwh      Float
+  errorKwh             Float
+  absoluteErrorKwh     Float
+  squaredErrorKwh2     Float
+  coveragePct          Float
+  sampleCount          Int
+  sampleIntervalSec    Int
+  actualQuality        ForecastActualQuality
+  verifiedAt           DateTime              @default(now())
+  point                SolarForecastPoint    @relation(fields: [solarForecastPointId], references: [id], onDelete: Cascade)
+
+  @@index([verifiedAt(sort: Desc)])
+  @@index([actualQuality, verifiedAt(sort: Desc)])
 }
 
 model TelemetryReading {
@@ -240,6 +557,78 @@ model TelemetryReading {
   @@unique([siteId, source, observedAt])
   @@index([siteId, observedAt(sort: Desc)])
   @@index([gatewayId, observedAt(sort: Desc)])
+}
+
+model TelemetryRollup15Minute {
+  id                   String                @id @default(cuid())
+  siteId               String
+  bucketStart          DateTime
+  bucketEnd            DateTime
+  generationWh         Int
+  consumptionWh        Int
+  importWh             Int
+  exportWh             Int
+  batteryChargeWh      Int
+  batteryDischargeWh   Int
+  averagePvPowerW      Int
+  peakPvPowerW         Int
+  averageLoadPowerW    Int
+  peakLoadPowerW       Int
+  averageIrradianceWm2 Int
+  sampleCount          Int
+  expectedSampleCount  Int
+  expectedIntervalSec  Int
+  coveredDurationSec   Int
+  coveragePct          Float
+  maxGapSec            Int
+  evidenceQuality      ForecastActualQuality
+  firstObservedAt      DateTime
+  lastObservedAt       DateTime
+  calculatedAt         DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  site                 SolarSite             @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, bucketStart])
+  @@index([siteId, bucketStart(sort: Desc)])
+  @@index([siteId, coveragePct, bucketStart(sort: Desc)])
+}
+
+model TelemetryRollupDaily {
+  id                    String                @id @default(cuid())
+  siteId                String
+  localDate             DateTime              @db.Date
+  timezone              String
+  dayStartAt            DateTime
+  dayEndAt              DateTime
+  generationWh          Int
+  consumptionWh         Int
+  importWh              Int
+  exportWh              Int
+  batteryChargeWh       Int
+  batteryDischargeWh    Int
+  averagePvPowerW       Int
+  peakPvPowerW          Int
+  averageLoadPowerW     Int
+  peakLoadPowerW        Int
+  averageIrradianceWm2  Int
+  intervalCount         Int
+  completeIntervalCount Int
+  sampleCount           Int
+  expectedSampleCount   Int
+  expectedIntervalSec   Int
+  coveredDurationSec    Int
+  coveragePct           Float
+  maxGapSec             Int
+  evidenceQuality       ForecastActualQuality
+  firstObservedAt       DateTime
+  lastObservedAt        DateTime
+  calculatedAt          DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  site                  SolarSite             @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, localDate])
+  @@index([siteId, localDate(sort: Desc)])
+  @@index([siteId, coveragePct, localDate(sort: Desc)])
 }
 
 model EdgeGateway {

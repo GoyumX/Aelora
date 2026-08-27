@@ -139,4 +139,47 @@ describe("persisted telemetry snapshot", () => {
     expect(result.connectivity.devices[0].status).toBe("OFFLINE");
     expect(result.arrays[0]).toMatchObject({ powerW: 0, status: "OFFLINE" });
   });
+
+  it("averages dense raw readings into five-minute display buckets", () => {
+    const recentReadings = Array.from({ length: 20 }, (_, index) => ({
+      ...reading,
+      observedAt: new Date(Date.parse("2026-08-11T10:00:00.000Z") + index * 30_000),
+      pvPowerW: 1_000 + index * 100,
+      loadPowerW: index % 2 === 0 ? 2_000 : 3_000,
+    }));
+
+    const result = createPersistedTelemetrySnapshot({
+      site: { id: "site-1", name: "Colombo Home" },
+      reading,
+      recentReadings,
+      gateway: null,
+      now: new Date("2026-08-11T10:30:30.000Z"),
+    });
+
+    expect(result.series).toHaveLength(2);
+    expect(result.series[0]).toMatchObject({
+      observedAt: "2026-08-11T10:00:00.000Z",
+      pvPowerW: 1_450,
+      loadPowerW: 2_500,
+      gapBefore: false,
+    });
+  });
+
+  it("marks missing telemetry windows so charts do not connect across them", () => {
+    const recentReadings = [
+      { ...reading, observedAt: new Date("2026-08-11T10:00:00.000Z") },
+      { ...reading, observedAt: new Date("2026-08-11T10:05:00.000Z") },
+      { ...reading, observedAt: new Date("2026-08-11T10:30:00.000Z") },
+    ];
+
+    const result = createPersistedTelemetrySnapshot({
+      site: { id: "site-1", name: "Colombo Home" },
+      reading,
+      recentReadings,
+      gateway: null,
+      now: new Date("2026-08-11T10:30:30.000Z"),
+    });
+
+    expect(result.series.map((point) => point.gapBefore)).toEqual([false, false, true]);
+  });
 });

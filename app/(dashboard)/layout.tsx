@@ -8,11 +8,14 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   const site = await db.solarSite.findFirst({
     where: { ownerId: user.id, deletedAt: null },
     orderBy: { createdAt: "asc" },
-    select: { name: true },
+    select: { id: true, name: true },
   });
+  const alertCount = site ? await db.alertIncident.count({
+    where: { siteId: site.id, status: { in: ["ACTIVE", "ACKNOWLEDGED"] } },
+  }) : 0;
 
   return (
-    <AppShell role={user.role} siteName={site?.name} user={user}>
+    <AppShell alertCount={alertCount} role={user.role} siteName={site?.name} user={user}>
       {children}
     </AppShell>
   );

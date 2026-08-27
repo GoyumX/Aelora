@@ -1,9 +1,12 @@
 import { BatteryCharging } from "lucide-react";
+import type { Metadata } from "next";
 
 import { BatteryForm } from "@/components/configuration/battery-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+
+export const metadata: Metadata = { title: "Battery settings" };
 
 export default async function BatteryPage() {
   const user = await requireUser();

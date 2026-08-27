@@ -115,6 +115,7 @@ describe("gateway heartbeat contract", () => {
     sentAt,
     softwareVersion: "0.2.0",
     publishingEnabled: false,
+    publishIntervalSec: 60,
     queueDepth: 3,
     deviceCount: 7,
   };
@@ -122,8 +123,14 @@ describe("gateway heartbeat contract", () => {
   it("accepts gateway health independently from telemetry publishing", () => {
     expect(gatewayHeartbeatSchema.parse(heartbeat)).toMatchObject({
       publishingEnabled: false,
+      publishIntervalSec: 60,
       queueDepth: 3,
     });
+  });
+
+  it("rejects a publish cadence outside the supported gateway interval", () => {
+    expect(gatewayHeartbeatSchema.safeParse({ ...heartbeat, publishIntervalSec: 5 }).success).toBe(false);
+    expect(gatewayHeartbeatSchema.safeParse({ ...heartbeat, publishIntervalSec: 3_601 }).success).toBe(false);
   });
 
   it("limits heartbeat clock skew", () => {

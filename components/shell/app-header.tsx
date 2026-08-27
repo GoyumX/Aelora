@@ -1,15 +1,17 @@
 "use client";
 
 import { Bell, ChevronDown, MapPin, UserRound } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { MobileNavigation } from "@/components/shell/mobile-navigation";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -19,12 +21,14 @@ import { authClient } from "@/lib/auth-client";
 import type { UserRole } from "@/lib/auth/authorization";
 
 type AppHeaderProps = {
+  alertCount?: number;
   siteName?: string;
   user?: { name: string; email: string };
   role?: UserRole;
 };
 
 export function AppHeader({
+  alertCount = 0,
   siteName = "No site configured",
   user = { name: "Aelora User", email: "" },
   role = "USER",
@@ -46,7 +50,7 @@ export function AppHeader({
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <MobileNavigation role={role} />
+        <MobileNavigation alertCount={alertCount} role={role} />
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
@@ -62,24 +66,25 @@ export function AppHeader({
             <ChevronDown aria-hidden="true" className="size-3.5 opacity-60" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-64">
-            <DropdownMenuLabel>Solar sites</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>{siteName}</DropdownMenuItem>
-            <DropdownMenuItem disabled>Add a site in Configuration</DropdownMenuItem>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Solar sites</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>{siteName}</DropdownMenuItem>
+              <DropdownMenuItem disabled>Add a site in Configuration</DropdownMenuItem>
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
       <div className="flex items-center gap-1 sm:gap-2">
-        <Button
-          aria-label="View notifications"
-          className="relative size-10"
-          size="icon"
-          variant="ghost"
+        <Link
+          aria-label={alertCount ? `View notifications, ${alertCount} open alerts` : "View notifications"}
+          className={buttonVariants({ className: "relative size-10", size: "icon", variant: "ghost" })}
+          href="/alerts"
         >
           <Bell aria-hidden="true" className="size-4.5" />
-          <span className="absolute right-2 top-2 size-2 rounded-full bg-alert-critical ring-2 ring-background" />
-        </Button>
+          {alertCount > 0 && <span className="absolute right-2 top-2 size-2 rounded-full bg-alert-critical ring-2 ring-background" />}
+        </Link>
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -103,13 +108,15 @@ export function AppHeader({
             />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              <span className="block">{user.name}</span>
-              <span className="block truncate text-xs font-normal text-muted-foreground">{user.email}</span>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile settings</DropdownMenuItem>
-            <DropdownMenuItem onClick={signOut}>Sign out</DropdownMenuItem>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>
+                <span className="block">{user.name}</span>
+                <span className="block truncate text-xs font-normal text-muted-foreground">{user.email}</span>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem render={<Link href="/settings#profile" />}>Profile settings</DropdownMenuItem>
+              <DropdownMenuItem onClick={signOut}>Sign out</DropdownMenuItem>
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

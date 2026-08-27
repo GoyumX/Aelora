@@ -5,13 +5,14 @@ import { AppSidebar } from "@/components/shell/app-sidebar";
 import type { UserRole } from "@/lib/auth/authorization";
 
 type AppShellProps = {
+  alertCount?: number;
   children: ReactNode;
   siteName?: string;
   user?: { name: string; email: string };
   role?: UserRole;
 };
 
-export function AppShell({ children, siteName, user, role = "USER" }: AppShellProps) {
+export function AppShell({ alertCount = 0, children, siteName, user, role = "USER" }: AppShellProps) {
   return (
     <div className="min-h-dvh bg-background">
       <a
@@ -21,10 +22,10 @@ export function AppShell({ children, siteName, user, role = "USER" }: AppShellPr
         Skip to main content
       </a>
       <div className="fixed inset-y-0 left-0 z-40 hidden w-68 lg:block">
-        <AppSidebar role={role} />
+        <AppSidebar alertCount={alertCount} role={role} />
       </div>
       <div className="min-h-dvh lg:pl-68">
-        <AppHeader role={role} siteName={siteName} user={user} />
+        <AppHeader alertCount={alertCount} role={role} siteName={siteName} user={user} />
         <main id="main-content" tabIndex={-1}>
           {children}
         </main>

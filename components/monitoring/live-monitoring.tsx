@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import useSWR from "swr";
 
+import { InteractivePowerChart } from "@/components/charts/interactive-power-chart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,10 +44,6 @@ function batteryLabel(value: number) {
   return "Battery idle";
 }
 
-function chartPoints(values: number[], max: number) {
-  return values.map((value, index) => `${24 + (index / Math.max(1, values.length - 1)) * 552},${188 - (value / max) * 145}`).join(" ");
-}
-
 function statusTone(status: string) {
   if (status === "NORMAL") return "border-energy/25 bg-energy/10 text-energy-strong";
   if (status === "OFFLINE" || status.includes("FAULT") || status === "GRID_OUTAGE") return "border-alert-critical/25 bg-alert-critical/10 text-alert-critical";
@@ -63,7 +60,28 @@ export function LiveMonitoring({ initialTelemetry }: { initialTelemetry: Telemet
   });
   const telemetry = data?.data ?? initialTelemetry;
   const gatewayStatus = telemetry.connectivity.gateway.status;
-  const maxChartValue = Math.max(6000, ...telemetry.series.flatMap((point) => [point.pvPowerW, point.loadPowerW]));
+  const timezone = "Asia/Colombo";
+  const chartTime = (value: string) => new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: timezone,
+  }).format(new Date(value));
+  const chartDate = (value: string) => new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: timezone,
+  }).format(new Date(value));
+  const chartData = telemetry.series.map((point) => ({
+    id: point.observedAt,
+    dateTime: point.observedAt,
+    axisLabel: chartTime(point.observedAt),
+    tooltipLabel: `${chartDate(point.observedAt)} · ${chartTime(point.observedAt)}`,
+    generation: point.pvPowerW / 1_000,
+    consumption: point.loadPowerW / 1_000,
+    breakBefore: point.gapBefore,
+  }));
   const metrics = [
     { label: "Solar output", value: kw(telemetry.pvPowerW), detail: `${(telemetry.pvEnergyTodayWh / 1000).toFixed(1)} kWh today`, icon: SunMedium, tone: "bg-solar/15 text-solar-strong" },
     { label: "Home demand", value: kw(telemetry.loadPowerW), detail: "Current household load", icon: House, tone: "bg-primary/10 text-primary" },
@@ -95,7 +113,7 @@ export function LiveMonitoring({ initialTelemetry }: { initialTelemetry: Telemet
         <div className="flex flex-wrap items-center gap-3">
           <div aria-live="polite" className="text-sm text-muted-foreground">
             <span className="block">Last received</span>
-            <time dateTime={telemetry.observedAt}>{new Intl.DateTimeFormat("en-LK", { timeStyle: "medium", timeZone: "Asia/Colombo" }).format(new Date(telemetry.observedAt))}</time>
+            <time dateTime={telemetry.observedAt}>{new Intl.DateTimeFormat("en-LK", { timeStyle: "medium", timeZone: timezone }).format(new Date(telemetry.observedAt))}</time>
           </div>
           <Button aria-label="Refresh telemetry" disabled={isValidating} onClick={() => void mutate()} size="lg" variant="outline">
             <RefreshCw aria-hidden="true" className={cn(isValidating && "animate-spin")} /> Refresh
@@ -114,15 +132,17 @@ export function LiveMonitoring({ initialTelemetry }: { initialTelemetry: Telemet
       </section>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(21rem,.65fr)]">
-        <Card className="shadow-xs">
+          <Card className="shadow-xs">
             <CardHeader><CardTitle><h2>Recent power trend</h2></CardTitle><CardDescription>Persisted gateway samples for solar output and household demand.</CardDescription></CardHeader>
           <CardContent>
-            <svg aria-label="Last-hour solar and household power" className="h-auto w-full" role="img" viewBox="0 0 600 225">
-              <title>Last-hour solar and household power</title><desc>Amber line shows solar power; blue dashed line shows household demand.</desc>
-              {[43, 91, 139, 187].map((y) => <line className="stroke-border" key={y} x1="24" x2="576" y1={y} y2={y} />)}
-              <polyline className="fill-none stroke-solar [stroke-width:4]" points={chartPoints(telemetry.series.map((point) => point.pvPowerW), maxChartValue)} strokeLinecap="round" strokeLinejoin="round" />
-              <polyline className="fill-none stroke-primary [stroke-width:3]" points={chartPoints(telemetry.series.map((point) => point.loadPowerW), maxChartValue)} strokeDasharray="7 7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <InteractivePowerChart
+              ariaLabel="Last-hour solar and household power"
+              description="Amber shows persisted solar output and blue shows persisted household demand from the live gateway."
+              points={chartData}
+              seriesLabels={{ generation: "Solar power", consumption: "Household demand" }}
+              unit="kW"
+              xAxisLabel={`Site local time (${timezone})`}
+            />
             <div className="mt-3 flex flex-wrap gap-5 text-xs text-muted-foreground"><span className="flex items-center gap-2"><span className="size-2.5 rounded-full bg-solar" />Solar power</span><span className="flex items-center gap-2"><span className="size-2.5 rounded-full bg-primary" />Household demand</span></div>
           </CardContent>
         </Card>

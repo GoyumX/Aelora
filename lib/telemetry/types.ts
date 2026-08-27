@@ -36,7 +36,7 @@ export type TelemetrySnapshot = {
   panelTemperatureC: number;
   irradianceWm2: number;
   arrays: Array<{ id: string; name: string; powerW: number; status: "NORMAL" | "UNDERPERFORMING" | "OFFLINE" }>;
-  series: Array<{ observedAt: string; pvPowerW: number; loadPowerW: number }>;
+  series: Array<{ observedAt: string; pvPowerW: number; loadPowerW: number; gapBefore?: boolean }>;
   connectivity: {
     gateway: {
       id: string | null;

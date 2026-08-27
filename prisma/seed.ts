@@ -17,6 +17,7 @@ function requiredSecret(name: "SEED_ADMIN_PASSWORD" | "SEED_USER_PASSWORD") {
 async function ensureUser(input: {
   email: string;
   name: string;
+  username: string;
   password: string;
   role: UserRole;
 }) {
@@ -32,6 +33,7 @@ async function ensureUser(input: {
   return db.user.update({
     where: { id: user.id },
     data: {
+      username: input.username,
       role: input.role,
       status: "ACTIVE",
       preference: {
@@ -69,6 +71,7 @@ async function main() {
   const admin = await ensureUser({
     email: process.env.SEED_ADMIN_EMAIL ?? "admin@aelora.local",
     name: "Aelora Admin",
+    username: "aelora-admin",
     password: requiredSecret("SEED_ADMIN_PASSWORD"),
     role: "ADMIN",
   });
@@ -76,6 +79,7 @@ async function main() {
   const user = await ensureUser({
     email: process.env.SEED_USER_EMAIL ?? "user@aelora.local",
     name: "Aelora User",
+    username: "aelora-user",
     password: requiredSecret("SEED_USER_PASSWORD"),
     role: "USER",
   });

@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import { HistoricalAnalytics } from "@/components/analytics/historical-analytics";
@@ -13,6 +14,7 @@ const history = {
   summary: { generationWh: 22000, consumptionWh: 18500, importWh: 2500, exportWh: 6000, selfConsumptionPct: 72.7 },
   comparison: { generationChangePct: 10, consumptionChangePct: -2 },
   completenessPct: 100,
+  dataResolution: "RAW_TELEMETRY" as const,
 };
 
 describe("HistoricalAnalytics", () => {
@@ -22,7 +24,23 @@ describe("HistoricalAnalytics", () => {
     expect(screen.getByRole("heading", { name: "Historical analytics" })).toBeInTheDocument();
     expect(screen.getByText("100% complete")).toBeInTheDocument();
     expect(screen.getByText("Simulated history")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: /generation and consumption history/i })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: /generation and consumption history/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /export csv/i })).toHaveAttribute("download");
+    expect(screen.getByLabelText("Choose a specific date")).toHaveAttribute("type", "date");
+    expect(screen.getByRole("button", { name: "View date" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Weather correlation" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "How this historical view is calculated" })).not.toBeInTheDocument();
+  });
+
+  it("reveals the selected past bucket when a user hovers the chart", async () => {
+    const user = userEvent.setup();
+    render(<HistoricalAnalytics history={history} />);
+
+    await user.hover(screen.getByRole("slider", { name: /generation and consumption history/i }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Aug 1");
+    expect(screen.getByRole("status")).toHaveTextContent("Generation12.0 kWh");
+    expect(screen.getByRole("status")).toHaveTextContent("Consumption9.0 kWh");
+    expect(screen.getByRole("status")).toHaveTextContent("Period");
   });
 });

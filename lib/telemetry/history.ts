@@ -44,6 +44,22 @@ export type HistoricalTelemetry = {
   summary: { generationWh: number; consumptionWh: number; importWh: number; exportWh: number; selfConsumptionPct: number };
   comparison: { generationChangePct: number | null; consumptionChangePct: number | null };
   completenessPct: number;
+  dataResolution: "RAW_TELEMETRY" | "DAILY_ROLLUP";
+};
+
+export type HistoryDailyRollup = {
+  localDate: Date;
+  dayStartAt: Date;
+  dayEndAt: Date;
+  generationWh: number;
+  consumptionWh: number;
+  importWh: number;
+  exportWh: number;
+  batteryChargeWh: number;
+  batteryDischargeWh: number;
+  averageIrradianceWm2: number;
+  sampleCount: number;
+  coveredDurationSec: number;
 };
 
 export function inferSampleIntervalMinutes(readings: Array<{ observedAt: Date }>, fallback = 60) {
@@ -73,6 +89,16 @@ function labelFor(key: string, grain: HistoryGrain, timezone: string) {
   return new Intl.DateTimeFormat("en", grain === "month" ? { month: "short", year: "numeric", timeZone: timezone } : { month: "short", day: "numeric", timeZone: timezone }).format(new Date(`${key}T12:00:00.000Z`));
 }
 
+function bucketFromDateKey(dateKey: string, grain: HistoryGrain) {
+  if (grain === "month") return `${dateKey.slice(0, 7)}-01`;
+  if (grain === "week") {
+    const value = new Date(`${dateKey}T00:00:00.000Z`);
+    value.setUTCDate(value.getUTCDate() - ((value.getUTCDay() + 6) % 7));
+    return value.toISOString().slice(0, 10);
+  }
+  return dateKey;
+}
+
 export function aggregateTelemetry(readings: HistoryReading[], grain: HistoryGrain, timezone: string, from: Date, to: Date, intervalMinutes: number) {
   const factor = intervalMinutes / 60;
   const groups = new Map<string, HistoryPoint & { irradianceTotal: number }>();
@@ -94,6 +120,37 @@ export function aggregateTelemetry(readings: HistoryReading[], grain: HistoryGra
   const consumedSolarWh = Math.max(0, summary.generationWh - summary.exportWh);
   const expectedSamples = Math.max(1, Math.round((to.getTime() - from.getTime()) / (intervalMinutes * 60_000)));
   return { points, summary: { ...summary, selfConsumptionPct: summary.generationWh ? Math.round(consumedSolarWh / summary.generationWh * 1000) / 10 : 0 }, completenessPct: Math.min(100, Math.round(readings.length / expectedSamples * 10_000) / 100) };
+}
+
+export function aggregateDailyTelemetry(rows: HistoryDailyRollup[], grain: HistoryGrain, timezone: string, from: Date, to: Date) {
+  const groups = new Map<string, HistoryPoint & { irradianceWeightedTotal: number }>();
+  for (const row of rows) {
+    const dateKey = row.localDate.toISOString().slice(0, 10);
+    const key = bucketFromDateKey(dateKey, grain);
+    const point = groups.get(key) ?? { bucketStart: `${key}T00:00:00.000Z`, label: labelFor(key, grain, timezone), generationWh: 0, consumptionWh: 0, importWh: 0, exportWh: 0, batteryChargeWh: 0, batteryDischargeWh: 0, averageIrradianceWm2: 0, sampleCount: 0, irradianceWeightedTotal: 0 };
+    point.generationWh += row.generationWh;
+    point.consumptionWh += row.consumptionWh;
+    point.importWh += row.importWh;
+    point.exportWh += row.exportWh;
+    point.batteryChargeWh += row.batteryChargeWh;
+    point.batteryDischargeWh += row.batteryDischargeWh;
+    point.irradianceWeightedTotal += row.averageIrradianceWm2 * row.sampleCount;
+    point.sampleCount += row.sampleCount;
+    groups.set(key, point);
+  }
+  const points = [...groups.values()].sort((left, right) => left.bucketStart.localeCompare(right.bucketStart)).map(({ irradianceWeightedTotal, ...point }) => ({
+    ...point,
+    averageIrradianceWm2: point.sampleCount ? Math.round(irradianceWeightedTotal / point.sampleCount) : 0,
+  }));
+  const summary = points.reduce((total, point) => ({ generationWh: total.generationWh + point.generationWh, consumptionWh: total.consumptionWh + point.consumptionWh, importWh: total.importWh + point.importWh, exportWh: total.exportWh + point.exportWh }), { generationWh: 0, consumptionWh: 0, importWh: 0, exportWh: 0 });
+  const consumedSolarWh = Math.max(0, summary.generationWh - summary.exportWh);
+  const coveredDurationSec = rows.reduce((sum, row) => sum + row.coveredDurationSec, 0);
+  const requestedDurationSec = Math.max(1, (to.getTime() - from.getTime()) / 1_000);
+  return {
+    points,
+    summary: { ...summary, selfConsumptionPct: summary.generationWh ? Math.round(consumedSolarWh / summary.generationWh * 1_000) / 10 : 0 },
+    completenessPct: Math.min(100, Math.round(coveredDurationSec / requestedDurationSec * 10_000) / 100),
+  };
 }
 
 export function historyToCsv(points: HistoryPoint[]) {

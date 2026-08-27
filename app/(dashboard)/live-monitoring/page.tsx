@@ -1,4 +1,5 @@
 import { ArrowRight, RadioTower } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { LiveMonitoring } from "@/components/monitoring/live-monitoring";
@@ -6,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { getLatestTelemetrySnapshot } from "@/lib/telemetry/latest-service";
+
+export const metadata: Metadata = { title: "Live monitoring" };
 
 export default async function LiveMonitoringPage() {
   const user = await requireUser();

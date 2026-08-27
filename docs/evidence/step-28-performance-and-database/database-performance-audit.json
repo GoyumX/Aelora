@@ -1,0 +1,233 @@
+{
+  "generatedAt": "2026-08-26T03:25:16.758Z",
+  "tables": [
+    {
+      "table_name": "DeviceObservation",
+      "estimated_rows": "50873",
+      "dead_rows": "0",
+      "total_size": "22 MB"
+    },
+    {
+      "table_name": "TelemetryReading",
+      "estimated_rows": "15907",
+      "dead_rows": "123",
+      "total_size": "9440 kB"
+    },
+    {
+      "table_name": "WeatherForecastPoint",
+      "estimated_rows": "3360",
+      "dead_rows": "0",
+      "total_size": "1120 kB"
+    },
+    {
+      "table_name": "SolarForecastPoint",
+      "estimated_rows": "960",
+      "dead_rows": "0",
+      "total_size": "336 kB"
+    },
+    {
+      "table_name": "WeatherObservation",
+      "estimated_rows": "13",
+      "dead_rows": "3",
+      "total_size": "112 kB"
+    },
+    {
+      "table_name": "SolarForecastVerification",
+      "estimated_rows": "76",
+      "dead_rows": "0",
+      "total_size": "112 kB"
+    }
+  ],
+  "coreIndexes": [
+    {
+      "table_name": "DeviceObservation",
+      "index_name": "DeviceObservation_deviceId_reportedAt_idx",
+      "index_definition": "CREATE INDEX \"DeviceObservation_deviceId_reportedAt_idx\" ON public.\"DeviceObservation\" USING btree (\"deviceId\", \"reportedAt\" DESC)"
+    },
+    {
+      "table_name": "DeviceObservation",
+      "index_name": "DeviceObservation_pkey",
+      "index_definition": "CREATE UNIQUE INDEX \"DeviceObservation_pkey\" ON public.\"DeviceObservation\" USING btree (id)"
+    },
+    {
+      "table_name": "DeviceObservation",
+      "index_name": "DeviceObservation_telemetryBatchId_deviceId_key",
+      "index_definition": "CREATE UNIQUE INDEX \"DeviceObservation_telemetryBatchId_deviceId_key\" ON public.\"DeviceObservation\" USING btree (\"telemetryBatchId\", \"deviceId\")"
+    },
+    {
+      "table_name": "SolarForecastPoint",
+      "index_name": "SolarForecastPoint_pkey",
+      "index_definition": "CREATE UNIQUE INDEX \"SolarForecastPoint_pkey\" ON public.\"SolarForecastPoint\" USING btree (id)"
+    },
+    {
+      "table_name": "SolarForecastPoint",
+      "index_name": "SolarForecastPoint_solarForecastRunId_validAt_key",
+      "index_definition": "CREATE UNIQUE INDEX \"SolarForecastPoint_solarForecastRunId_validAt_key\" ON public.\"SolarForecastPoint\" USING btree (\"solarForecastRunId\", \"validAt\")"
+    },
+    {
+      "table_name": "SolarForecastPoint",
+      "index_name": "SolarForecastPoint_validAt_idx",
+      "index_definition": "CREATE INDEX \"SolarForecastPoint_validAt_idx\" ON public.\"SolarForecastPoint\" USING btree (\"validAt\")"
+    },
+    {
+      "table_name": "SolarForecastRun",
+      "index_name": "SolarForecastRun_pkey",
+      "index_definition": "CREATE UNIQUE INDEX \"SolarForecastRun_pkey\" ON public.\"SolarForecastRun\" USING btree (id)"
+    },
+    {
+      "table_name": "SolarForecastRun",
+      "index_name": "SolarForecastRun_requestId_key",
+      "index_definition": "CREATE UNIQUE INDEX \"SolarForecastRun_requestId_key\" ON public.\"SolarForecastRun\" USING btree (\"requestId\")"
+    },
+    {
+      "table_name": "SolarForecastRun",
+      "index_name": "SolarForecastRun_siteId_createdAt_idx",
+      "index_definition": "CREATE INDEX \"SolarForecastRun_siteId_createdAt_idx\" ON public.\"SolarForecastRun\" USING btree (\"siteId\", \"createdAt\" DESC)"
+    },
+    {
+      "table_name": "SolarForecastRun",
+      "index_name": "SolarForecastRun_weatherForecastRunId_idx",
+      "index_definition": "CREATE INDEX \"SolarForecastRun_weatherForecastRunId_idx\" ON public.\"SolarForecastRun\" USING btree (\"weatherForecastRunId\")"
+    },
+    {
+      "table_name": "TelemetryReading",
+      "index_name": "TelemetryReading_gatewayId_observedAt_idx",
+      "index_definition": "CREATE INDEX \"TelemetryReading_gatewayId_observedAt_idx\" ON public.\"TelemetryReading\" USING btree (\"gatewayId\", \"observedAt\" DESC)"
+    },
+    {
+      "table_name": "TelemetryReading",
+      "index_name": "TelemetryReading_pkey",
+      "index_definition": "CREATE UNIQUE INDEX \"TelemetryReading_pkey\" ON public.\"TelemetryReading\" USING btree (id)"
+    },
+    {
+      "table_name": "TelemetryReading",
+      "index_name": "TelemetryReading_siteId_observedAt_idx",
+      "index_definition": "CREATE INDEX \"TelemetryReading_siteId_observedAt_idx\" ON public.\"TelemetryReading\" USING btree (\"siteId\", \"observedAt\" DESC)"
+    },
+    {
+      "table_name": "TelemetryReading",
+      "index_name": "TelemetryReading_siteId_source_observedAt_key",
+      "index_definition": "CREATE UNIQUE INDEX \"TelemetryReading_siteId_source_observedAt_key\" ON public.\"TelemetryReading\" USING btree (\"siteId\", source, \"observedAt\")"
+    },
+    {
+      "table_name": "TelemetryReading",
+      "index_name": "TelemetryReading_telemetryBatchId_key",
+      "index_definition": "CREATE UNIQUE INDEX \"TelemetryReading_telemetryBatchId_key\" ON public.\"TelemetryReading\" USING btree (\"telemetryBatchId\")"
+    },
+    {
+      "table_name": "WeatherForecastRun",
+      "index_name": "WeatherForecastRun_pkey",
+      "index_definition": "CREATE UNIQUE INDEX \"WeatherForecastRun_pkey\" ON public.\"WeatherForecastRun\" USING btree (id)"
+    },
+    {
+      "table_name": "WeatherForecastRun",
+      "index_name": "WeatherForecastRun_siteId_fetchedAt_idx",
+      "index_definition": "CREATE INDEX \"WeatherForecastRun_siteId_fetchedAt_idx\" ON public.\"WeatherForecastRun\" USING btree (\"siteId\", \"fetchedAt\" DESC)"
+    },
+    {
+      "table_name": "WeatherForecastRun",
+      "index_name": "WeatherForecastRun_siteId_provider_fetchedAt_idx",
+      "index_definition": "CREATE INDEX \"WeatherForecastRun_siteId_provider_fetchedAt_idx\" ON public.\"WeatherForecastRun\" USING btree (\"siteId\", provider, \"fetchedAt\" DESC)"
+    },
+    {
+      "table_name": "WeatherForecastRun",
+      "index_name": "WeatherForecastRun_siteId_provider_fetchedAt_key",
+      "index_definition": "CREATE UNIQUE INDEX \"WeatherForecastRun_siteId_provider_fetchedAt_key\" ON public.\"WeatherForecastRun\" USING btree (\"siteId\", provider, \"fetchedAt\")"
+    },
+    {
+      "table_name": "WeatherObservation",
+      "index_name": "WeatherObservation_pkey",
+      "index_definition": "CREATE UNIQUE INDEX \"WeatherObservation_pkey\" ON public.\"WeatherObservation\" USING btree (id)"
+    },
+    {
+      "table_name": "WeatherObservation",
+      "index_name": "WeatherObservation_siteId_observedAt_idx",
+      "index_definition": "CREATE INDEX \"WeatherObservation_siteId_observedAt_idx\" ON public.\"WeatherObservation\" USING btree (\"siteId\", \"observedAt\" DESC)"
+    },
+    {
+      "table_name": "WeatherObservation",
+      "index_name": "WeatherObservation_siteId_provider_fetchedAt_idx",
+      "index_definition": "CREATE INDEX \"WeatherObservation_siteId_provider_fetchedAt_idx\" ON public.\"WeatherObservation\" USING btree (\"siteId\", provider, \"fetchedAt\" DESC)"
+    },
+    {
+      "table_name": "WeatherObservation",
+      "index_name": "WeatherObservation_siteId_provider_observedAt_key",
+      "index_definition": "CREATE UNIQUE INDEX \"WeatherObservation_siteId_provider_observedAt_key\" ON public.\"WeatherObservation\" USING btree (\"siteId\", provider, \"observedAt\")"
+    }
+  ],
+  "unindexedForeignKeys": [],
+  "queries": [
+    {
+      "name": "Latest telemetry by site",
+      "executionTimeMs": 0.034,
+      "planningTimeMs": 0.113,
+      "nodes": [
+        {
+          "nodeType": "Limit",
+          "rows": 1
+        },
+        {
+          "nodeType": "Index Scan",
+          "relation": "TelemetryReading",
+          "index": "TelemetryReading_siteId_observedAt_idx",
+          "rows": 1
+        }
+      ],
+      "passed": true
+    },
+    {
+      "name": "Thirty-day telemetry range",
+      "executionTimeMs": 3.265,
+      "planningTimeMs": 0.109,
+      "nodes": [
+        {
+          "nodeType": "Sort",
+          "rows": 7621
+        },
+        {
+          "nodeType": "Seq Scan",
+          "relation": "TelemetryReading",
+          "rows": 7621
+        }
+      ],
+      "passed": true
+    },
+    {
+      "name": "Latest forecast by site",
+      "executionTimeMs": 0.032,
+      "planningTimeMs": 3.037,
+      "nodes": [
+        {
+          "nodeType": "Limit",
+          "rows": 1
+        },
+        {
+          "nodeType": "Index Scan",
+          "relation": "SolarForecastRun",
+          "index": "SolarForecastRun_siteId_createdAt_idx",
+          "rows": 1
+        }
+      ],
+      "passed": true
+    },
+    {
+      "name": "Latest stored weather",
+      "executionTimeMs": 0.031,
+      "planningTimeMs": 2.618,
+      "nodes": [
+        {
+          "nodeType": "Limit",
+          "rows": 1
+        },
+        {
+          "nodeType": "Index Scan",
+          "relation": "WeatherObservation",
+          "index": "WeatherObservation_siteId_observedAt_idx",
+          "rows": 1
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "passed": true
+}

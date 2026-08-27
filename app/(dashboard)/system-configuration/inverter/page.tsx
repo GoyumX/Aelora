@@ -1,9 +1,12 @@
 import { Cpu } from "lucide-react";
+import type { Metadata } from "next";
 
 import { InverterForm } from "@/components/configuration/inverter-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+
+export const metadata: Metadata = { title: "Inverter settings" };
 
 export default async function InverterPage() {
   const user = await requireUser();

@@ -1,4 +1,5 @@
 import { ArrowRight, BatteryCharging, Cable, Cpu, PanelsTopLeft, RadioTower, Settings2 } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { GatewayCredentialActions } from "@/components/configuration/gateway-credential-actions";
@@ -9,6 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { deriveConnectivityStatus } from "@/lib/gateway/status";
+
+export const metadata: Metadata = { title: "System configuration" };
 
 const links = [
   { href: "/system-configuration/solar-panels", title: "Solar arrays", description: "Panel count, rated power, orientation, and installation details.", icon: PanelsTopLeft },

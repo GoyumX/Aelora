@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-08-26T13:46:10.109Z",
+  "finalizedThrough": "2026-08-26T13:45:00.000Z",
+  "passed": true,
+  "sites": [
+    {
+      "siteId": "cmshudowo0003uoww6v8pimyn",
+      "siteName": "Colombo Home",
+      "rawReadings": 12024,
+      "intervalRows": 4608,
+      "dailyRows": 193,
+      "rawToIntervalPassed": true,
+      "intervalToDailyPassed": true,
+      "differences": []
+    },
+    {
+      "siteId": "cmshudowu0005uowwuyot3805",
+      "siteName": "Admin Demo Site",
+      "rawReadings": 4320,
+      "intervalRows": 4320,
+      "dailyRows": 181,
+      "rawToIntervalPassed": true,
+      "intervalToDailyPassed": true,
+      "differences": []
+    }
+  ]
+}

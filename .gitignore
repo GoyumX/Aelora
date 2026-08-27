@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/playwright-report
+/test-results
 
 # next.js
 /.next/
@@ -19,6 +21,7 @@
 
 # production
 /build
+/backups
 
 # misc
 .DS_Store
@@ -39,3 +42,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+AELORA_IMPLEMENTATION_PLAN.md

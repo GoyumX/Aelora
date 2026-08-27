@@ -21,9 +21,24 @@ export function SiteConfigurationForm({ site }: { site: SiteValues }) {
     const body = Object.fromEntries(new FormData(event.currentTarget));
     const response = await fetch(`/api/sites/${site.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const payload = await response.json().catch(() => null);
+    if (!response.ok) {
+      setPending(false);
+      setMessage(payload?.error?.message ?? "Unable to save site configuration.");
+      return;
+    }
+
+    let weatherRefreshed = false;
+    try {
+      const weatherResponse = await fetch(`/api/sites/${site.id}/weather`, { method: "POST" });
+      weatherRefreshed = weatherResponse.ok;
+    } catch {
+      weatherRefreshed = false;
+    }
     setPending(false);
-    setMessage(response.ok ? "Site configuration saved." : payload?.error?.message ?? "Unable to save site configuration.");
-    if (response.ok) router.refresh();
+    setMessage(weatherRefreshed
+      ? "Site configuration saved and weather refreshed."
+      : "Site configuration saved. Weather refresh is pending; the last stored observation remains visible.");
+    router.refresh();
   }
 
   return (

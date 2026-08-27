@@ -64,6 +64,34 @@ const knownDeviceStatuses = new Set<TelemetryDeviceStatus>([
   "NORMAL", "CLOUD_RAMP", "ARRAY_UNDERPERFORMING", "GRID_OUTAGE", "INVERTER_FAULT", "BATTERY_FAULT",
 ]);
 
+const displayBucketMs = 5 * 60_000;
+
+function aggregatePowerSeries(
+  readings: Array<Pick<PersistedReading, "observedAt" | "pvPowerW" | "loadPowerW">>,
+) {
+  const buckets = new Map<number, { pvPowerW: number; loadPowerW: number; count: number }>();
+  for (const reading of [...readings].sort((first, second) => first.observedAt.getTime() - second.observedAt.getTime())) {
+    const bucketAt = Math.floor(reading.observedAt.getTime() / displayBucketMs) * displayBucketMs;
+    const bucket = buckets.get(bucketAt) ?? { pvPowerW: 0, loadPowerW: 0, count: 0 };
+    bucket.pvPowerW += reading.pvPowerW;
+    bucket.loadPowerW += reading.loadPowerW;
+    bucket.count += 1;
+    buckets.set(bucketAt, bucket);
+  }
+
+  let previousBucketAt: number | null = null;
+  return [...buckets.entries()].map(([bucketAt, bucket]) => {
+    const gapBefore = previousBucketAt != null && bucketAt - previousBucketAt > displayBucketMs * 1.5;
+    previousBucketAt = bucketAt;
+    return {
+      observedAt: new Date(bucketAt).toISOString(),
+      pvPowerW: Math.round(bucket.pvPowerW / bucket.count),
+      loadPowerW: Math.round(bucket.loadPowerW / bucket.count),
+      gapBefore,
+    };
+  });
+}
+
 export function createPersistedTelemetrySnapshot(input: {
   site: { id: string; name: string };
   reading: PersistedReading;
@@ -135,11 +163,7 @@ export function createPersistedTelemetrySnapshot(input: {
     panelTemperatureC: input.reading.panelTemperatureC,
     irradianceWm2: input.reading.irradianceWm2,
     arrays,
-    series: input.recentReadings.map((reading) => ({
-      observedAt: reading.observedAt.toISOString(),
-      pvPowerW: reading.pvPowerW,
-      loadPowerW: reading.loadPowerW,
-    })),
+    series: aggregatePowerSeries(input.recentReadings),
     connectivity: {
       gateway: {
         id: input.gateway?.id ?? null,

@@ -1,0 +1,62 @@
+.heroGrid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.032) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+.ambientGlow {
+  position: absolute;
+  inset: 3rem -12rem auto auto;
+  width: 46rem;
+  height: 46rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 189, 69, 0.13), rgba(255, 189, 69, 0) 68%);
+  pointer-events: none;
+}
+
+.solarOrbit {
+  position: absolute;
+  z-index: 0;
+  top: -4.5rem;
+  right: -4.5rem;
+  width: 18rem;
+  height: 18rem;
+  border: 1px solid rgba(255, 189, 69, 0.28);
+  border-radius: 999px;
+  transform: rotate(-22deg) scaleY(0.42);
+  animation: orbit-breathe 8s ease-in-out infinite;
+}
+
+.orbitDot {
+  position: absolute;
+  top: 50%;
+  left: -0.36rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-top: -0.35rem;
+  border-radius: 999px;
+  background: #ffbd45;
+  box-shadow: 0 0 24px rgba(255, 189, 69, 0.8);
+}
+
+.livePulse {
+  animation: live-pulse 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes live-pulse {
+  75%, 100% { transform: scale(2.4); opacity: 0; }
+}
+
+@keyframes orbit-breathe {
+  0%, 100% { opacity: 0.55; transform: rotate(-22deg) scaleY(0.42) scale(1); }
+  50% { opacity: 0.9; transform: rotate(-22deg) scaleY(0.42) scale(1.04); }
+}
+
+@media (max-width: 64rem) {
+  .ambientGlow { top: 20rem; right: -20rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .solarOrbit, .livePulse { animation: none; }
+}

@@ -1,10 +1,13 @@
 import { PanelsTopLeft } from "lucide-react";
+import type { Metadata } from "next";
 
 import { SolarArrayForm } from "@/components/configuration/solar-array-form";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+
+export const metadata: Metadata = { title: "Solar panel configuration" };
 
 export default async function SolarPanelsPage() {
   const user = await requireUser();

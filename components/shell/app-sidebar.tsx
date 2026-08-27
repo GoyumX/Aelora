@@ -10,6 +10,7 @@ import { getNavigationForRole } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 type AppSidebarProps = {
+  alertCount?: number;
   className?: string;
   onNavigate?: () => void;
   role?: UserRole;
@@ -19,7 +20,7 @@ function isCurrentRoute(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AppSidebar({ className, onNavigate, role = "USER" }: AppSidebarProps) {
+export function AppSidebar({ alertCount = 0, className, onNavigate, role = "USER" }: AppSidebarProps) {
   const pathname = usePathname();
   const navigation = getNavigationForRole(role);
 
@@ -47,7 +48,7 @@ export function AppSidebar({ className, onNavigate, role = "USER" }: AppSidebarP
       >
         {navigation.map((group) => (
           <div key={group.label}>
-            <p className="mb-2 px-3 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/55">
+            <p className="mb-2 px-3 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/75">
               {group.label}
             </p>
             <ul className="space-y-1">
@@ -58,6 +59,7 @@ export function AppSidebar({ className, onNavigate, role = "USER" }: AppSidebarP
                 return (
                   <li key={item.href}>
                     <Link
+                      aria-label={item.label === "Alerts" && alertCount > 0 ? `Alerts, ${alertCount} open` : undefined}
                       aria-current={pathname === item.href ? "page" : undefined}
                       className={cn(
                         "flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium outline-none transition-colors",
@@ -70,12 +72,12 @@ export function AppSidebar({ className, onNavigate, role = "USER" }: AppSidebarP
                     >
                       <Icon aria-hidden="true" className="size-4.5 shrink-0" />
                       <span className="flex-1">{item.label}</span>
-                      {item.label === "Alerts" && (
+                      {item.label === "Alerts" && alertCount > 0 && (
                         <Badge
                           className="min-w-5 justify-center bg-alert-critical text-white"
                           variant="secondary"
                         >
-                          2
+                          {alertCount > 99 ? "99+" : alertCount}
                         </Badge>
                       )}
                     </Link>
@@ -127,7 +129,7 @@ export function AppSidebar({ className, onNavigate, role = "USER" }: AppSidebarP
             </span>
             Gateway pipeline ready
           </div>
-          <p className="mt-1 text-xs leading-5 text-sidebar-foreground/60">
+          <p className="mt-1 text-xs leading-5 text-sidebar-foreground/75">
             Live data arrives through an enrolled site gateway.
           </p>
         </div>
