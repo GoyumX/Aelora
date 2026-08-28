@@ -1,5 +1,9 @@
 # Aelora deployment: A–Z Railway guide
 
+> New to deployment? Use
+> [Deploy Aelora from zero: beginner step-by-step guide](BEGINNER_DEPLOYMENT_GUIDE.md)
+> first. This document is the more detailed operational reference.
+
 This runbook deploys Aelora as a four-service system and keeps the virtual or
 physical site gateway at the solar installation. Follow the sections in order.
 
@@ -57,7 +61,7 @@ forecast is not recomputed unnecessarily.
 
 Install or prepare:
 
-1. A GitHub account and three repositories: web, ML service, and virtual gateway.
+1. A GitHub account with the existing web, ML service, and virtual gateway repositories.
 2. A Railway account with billing/cost limits configured.
 3. Git and Node.js 22 on the deployment operator computer.
 4. Railway CLI on Windows:
@@ -76,25 +80,17 @@ different database password and exposes it through a reference variable.
 
 ## 4. Put all three projects on GitHub
 
-The web repository already has a remote. The ML and gateway repositories need
-their own empty GitHub repositories before Railway can read the ML source.
+All three repositories now have GitHub remotes:
 
-For each repository, keep `dev` for ongoing work and deploy reviewed code from
-`main`:
+- `https://github.com/GoyumX/Aelora`
+- `https://github.com/GoyumX/aelora-ml-service`
+- `https://github.com/GoyumX/aelora-virtual-gateway`
 
-```powershell
-cd C:\Users\GoYuM\Documents\ChatGPT\Aelora\Project\aelora-ml-service
-git remote add origin https://github.com/YOUR_ACCOUNT/aelora-ml-service.git
-git push -u origin dev
-
-cd C:\Users\GoYuM\Documents\ChatGPT\Aelora\Project\aelora-virtual-gateway
-git remote add origin https://github.com/YOUR_ACCOUNT/aelora-virtual-gateway.git
-git push -u origin dev
-```
-
-Create pull requests from `dev` to `main`. Require the included GitHub Actions
-workflow to pass before merging. Never add `.env`, the `.skops` model artifact,
-the gateway SQLite database, or downloaded datasets to Git.
+Their current deployable work is on `dev`. Use the beginner guide to deploy
+`dev` first, then move Railway to reviewed `main` branches after the first
+acceptance pass. Require the included GitHub Actions workflows to pass before
+merging. Never add `.env`, the `.skops` model artifact, the gateway SQLite
+database, or downloaded datasets to Git.
 
 ## 5. Generate production secrets
 

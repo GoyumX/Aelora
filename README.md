@@ -2,7 +2,13 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Production deployment
 
-Use the complete [Aelora A–Z Railway deployment and site-gateway runbook](docs/deployment/RAILWAY_A_TO_Z.md).
+If this is your first deployment, start with the
+[beginner step-by-step deployment guide](docs/deployment/BEGINNER_DEPLOYMENT_GUIDE.md).
+It begins with environment variables and shows every Railway and gateway step
+in the order you must perform it.
+
+Use the [advanced Aelora A–Z Railway deployment and site-gateway runbook](docs/deployment/RAILWAY_A_TO_Z.md)
+after the first deployment works.
 It covers PostgreSQL migrations and backups, the private ML model volume,
 one-time admin creation, scheduled weather/forecast refresh, GitHub flow, and
 connecting the separately runnable virtual gateway.
