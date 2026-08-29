@@ -421,8 +421,14 @@ In its deployment logs, verify that the container starts and the healthcheck
 passes. If you want to verify from Command Prompt:
 
 ~~~bat
-railway ssh --service aelora-ml -- python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/ready').read().decode())"
+railway ssh --service aelora-ml -- python -c "import urllib.request as r; print(r.urlopen('http:'+'//'+'127.0.0.1:8000/ready').read().decode())"
 ~~~
+
+The URL is split inside this command to stop chat or Markdown applications from
+turning it into a clickable link when copied. In PowerShell, use `railway.cmd`
+instead of `railway`. If Railway temporarily says the container is `exited`
+during a redeploy, wait until the new deployment is **Active**, run
+`railway.cmd status`, and retry the readiness command.
 
 Checkpoint: **aelora-ml** should be active/healthy and should still have no
 public domain.
@@ -858,6 +864,7 @@ deploy main. Keep dev for development and use pull requests into main.
 | `No SSH keys found` | This Windows account has no SSH key registered with Railway | Generate/register the public key using Step 5.6; never upload the private key |
 | `Saving key "railway.cmd ..." failed` | A Railway command was pasted into the `ssh-keygen` filename question | Restart Step 5.6 and use its fixed `-f C:\Users\GoYuM\.ssh\railwaykey` command |
 | `/unisolar... is not recognized` | Expected output was pasted as a PowerShell command | Do not run that path; run only the two Railway commands immediately above it |
+| `container is not running (status: exited)` immediately after redeploy | The CLI targeted the deployment while Railway was replacing the container | Wait for Active, run `railway.cmd status`, and retry the copy-safe Step 5.7 readiness command |
 | `'Get-Item' is not recognized` | A PowerShell command was pasted into Command Prompt | Use the CMD `dir` command shown in Step 5.5 |
 | `.Hash was unexpected at this time` | PowerShell checksum syntax was pasted into Command Prompt | Use `certutil -hashfile` exactly as shown in Step 5.5 |
 | Model file cannot be found | The filename contains copied Markdown escapes | Use `unisolar_capacity_candidate_v3.skops`, with no backslashes before underscores |
