@@ -257,6 +257,29 @@ The login command opens a browser. Approve the login and return to Command
 Prompt. A message such as `Signed in as Your Name (your@email.com)` means the
 login succeeded.
 
+#### If you accidentally opened PowerShell
+
+PowerShell may block npm's `railway.ps1` launcher and display:
+
+~~~text
+railway.ps1 cannot be loaded because running scripts is disabled on this system
+~~~
+
+The Railway CLI is still installed. Use its Windows command launcher directly:
+
+~~~powershell
+railway.cmd login
+~~~
+
+This is the safest quick fix because it does not change your computer's
+PowerShell execution policy. While staying in PowerShell, use `railway.cmd`
+instead of `railway` for every Railway command in this guide. Alternatively,
+close PowerShell, open **Command Prompt**, and use the commands as written.
+
+The `npm warn deprecated` messages shown during installation come from packages
+inside the Railway CLI. The line `changed ... packages` means npm completed the
+installation; those warnings do not mean the installation failed.
+
 ### 5.5 Verify the model file before uploading
 
 ~~~bat
@@ -762,6 +785,7 @@ deploy main. Keep dev for development and use pull requests into main.
 
 | Problem | Most likely cause | Exact check |
 | --- | --- | --- |
+| `railway.ps1 cannot be loaded` | PowerShell script execution is restricted | Run `railway.cmd login`, or switch to Command Prompt |
 | `'Get-Item' is not recognized` | A PowerShell command was pasted into Command Prompt | Use the CMD `dir` command shown in Step 5.5 |
 | `.Hash was unexpected at this time` | PowerShell checksum syntax was pasted into Command Prompt | Use `certutil -hashfile` exactly as shown in Step 5.5 |
 | Model file cannot be found | The filename contains copied Markdown escapes | Use `unisolar_capacity_candidate_v3.skops`, with no backslashes before underscores |
