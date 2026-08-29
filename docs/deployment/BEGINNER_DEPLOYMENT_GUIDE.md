@@ -34,6 +34,40 @@ PostgreSQL, ML, or the scheduler.
 
 ---
 
+## Before Step 1 — Use Windows Command Prompt
+
+This guide is written for **Windows Command Prompt (CMD)**.
+
+You are using Command Prompt when the line begins like this:
+
+~~~text
+C:\Users\GoYuM>
+~~~
+
+PowerShell looks different because it starts with `PS`:
+
+~~~text
+PS C:\Users\GoYuM>
+~~~
+
+The commands in this guide can be pasted into **Command Prompt**. To open it:
+
+1. Press the Windows key.
+2. Type **Command Prompt** or **cmd**.
+3. Open **Command Prompt**.
+
+Important Windows command rules:
+
+- Copy only the command after the `>` prompt. Never type the prompt itself.
+- Use `cd /d` when changing folders. The `/d` option also changes drives.
+- Do not add backslashes before underscores in filenames.
+- The exact model filename is `unisolar_capacity_candidate_v3.skops`.
+- `unisolar\_capacity\_candidate\_v3.skops` is incorrect. Those extra
+  backslashes sometimes appear when text is copied from formatted Markdown.
+- Run one command at a time and wait for its result before continuing.
+
+---
+
 ## Step 1 — Understand the .env files first
 
 This is the most important distinction:
@@ -60,12 +94,10 @@ You will create that file after the web application has a public URL.
 
 ## Step 2 — Create and save four secrets
 
-Open PowerShell. Run this command three separate times:
+Open Command Prompt. Run this command three separate times:
 
-~~~powershell
-$secretBytes = New-Object byte[] 48
-[Security.Cryptography.RandomNumberGenerator]::Fill($secretBytes)
-[Convert]::ToBase64String($secretBytes)
+~~~bat
+node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
 ~~~
 
 Each run prints a different random value. Save them in a password manager or a
@@ -214,24 +246,33 @@ Apply or deploy the staged variable changes.
 
 ### 5.4 Install the Railway CLI
 
-On your computer, open PowerShell:
+On your computer, open Command Prompt:
 
-~~~powershell
+~~~bat
 npm install --global @railway/cli
 railway login
 ~~~
 
-The login command opens a browser. Approve the login and return to PowerShell.
+The login command opens a browser. Approve the login and return to Command
+Prompt. A message such as `Signed in as Your Name (your@email.com)` means the
+login succeeded.
 
 ### 5.5 Verify the model file before uploading
 
-~~~powershell
-cd C:\Users\GoYuM\Documents\ChatGPT\Aelora\Project\aelora-ml-service
-Get-Item .\models\unisolar_capacity_candidate_v3.skops
-(Get-FileHash .\models\unisolar_capacity_candidate_v3.skops -Algorithm SHA256).Hash
+~~~bat
+cd /d C:\Users\GoYuM\Documents\ChatGPT\Aelora\Project\aelora-ml-service
+dir models\unisolar_capacity_candidate_v3.skops
+certutil -hashfile models\unisolar_capacity_candidate_v3.skops SHA256
 ~~~
 
-The file size should be **54,799,511 bytes**. The hash must be:
+The `dir` result should list the file with a size of **54,799,511 bytes**.
+`certutil` should print a SHA256 hash followed by:
+
+~~~text
+CertUtil: -hashfile command completed successfully.
+~~~
+
+The hash must be:
 
 ~~~text
 BDB71B6E0436204D1CF33A9118D1E40C28052073512EB571AB4174CBEFB65FD9
@@ -239,11 +280,15 @@ BDB71B6E0436204D1CF33A9118D1E40C28052073512EB571AB4174CBEFB65FD9
 
 Stop if the file is missing or the hash is different.
 
+Do not type `Get-Item` or `Get-FileHash` in Command Prompt. Those are
+PowerShell-only commands. Also ensure the filename contains ordinary
+underscores with no backslash before them.
+
 ### 5.6 Link the CLI and upload the model
 
 Stay inside the ML project directory and run:
 
-~~~powershell
+~~~bat
 railway link
 ~~~
 
@@ -256,7 +301,7 @@ When prompted:
 
 Now run:
 
-~~~powershell
+~~~bat
 railway volume list
 railway volume files --volume aelora-ml-models upload .\models\unisolar_capacity_candidate_v3.skops /unisolar_capacity_candidate_v3.skops
 railway volume files --volume aelora-ml-models list /
@@ -282,9 +327,9 @@ Maximum retries: 5
 Redeploy the ML service.
 
 In its deployment logs, verify that the container starts and the healthcheck
-passes. If you want to verify from PowerShell:
+passes. If you want to verify from Command Prompt:
 
-~~~powershell
+~~~bat
 railway ssh --service aelora-ml -- python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/ready').read().decode())"
 ~~~
 
@@ -386,17 +431,16 @@ Redeploy **aelora-web** and wait until it becomes active.
 
 ### 6.5 Verify web and database connectivity
 
-In PowerShell, replace the URL:
+In Command Prompt, replace the URL:
 
-~~~powershell
-Invoke-RestMethod https://YOUR-REAL-DOMAIN/api/health
+~~~bat
+curl.exe https://YOUR-REAL-DOMAIN/api/health
 ~~~
 
-Expected result:
+Expected JSON contains:
 
-~~~text
-status: ok
-database: ok
+~~~json
+{"status":"ok","checks":{"database":"ok"}}
 ~~~
 
 If it returns 503, do not continue. Use the troubleshooting table at the end.
@@ -408,10 +452,10 @@ landing page.
 
 ## Step 7 — Create the first admin account
 
-In PowerShell, run:
+In Command Prompt, run:
 
-~~~powershell
-cd C:\Users\GoYuM\Documents\ChatGPT\Aelora\Project\aelora
+~~~bat
+cd /d C:\Users\GoYuM\Documents\ChatGPT\Aelora\Project\aelora
 railway link
 ~~~
 
@@ -419,7 +463,7 @@ Select the same **Aelora** Railway project and **aelora-web** service.
 
 Run:
 
-~~~powershell
+~~~bat
 railway ssh --service aelora-web -- npm run admin:bootstrap
 ~~~
 
@@ -521,11 +565,11 @@ Checkpoint: the project canvas should now show **postgres**, **aelora-ml**,
 
 The web application is now public, so you can configure the gateway.
 
-Open PowerShell:
+Open Command Prompt:
 
-~~~powershell
-cd C:\Users\GoYuM\Documents\ChatGPT\Aelora\Project\aelora-virtual-gateway
-Copy-Item .env.example .env
+~~~bat
+cd /d C:\Users\GoYuM\Documents\ChatGPT\Aelora\Project\aelora-virtual-gateway
+copy .env.example .env
 notepad .env
 ~~~
 
@@ -546,7 +590,7 @@ Save and close Notepad.
 
 Check that Git will not upload the .env:
 
-~~~powershell
+~~~bat
 git status --short
 ~~~
 
@@ -560,9 +604,9 @@ The .env file should not be shown. If it is shown, stop and do not commit it.
 
 1. Install and open Docker Desktop.
 2. Wait until Docker Desktop says its engine is running.
-3. In the gateway PowerShell window, run:
+3. In the gateway Command Prompt window, run:
 
-   ~~~powershell
+   ~~~bat
    docker compose up --build -d
    docker compose ps
    ~~~
@@ -576,7 +620,7 @@ The .env file should not be shown. If it is shown, stop and do not commit it.
 
 To see gateway logs:
 
-~~~powershell
+~~~bat
 docker compose logs --follow gateway
 ~~~
 
@@ -584,13 +628,13 @@ Press Ctrl+C to leave the log view. This does not stop the gateway.
 
 To stop the gateway later:
 
-~~~powershell
+~~~bat
 docker compose stop
 ~~~
 
 To start it again:
 
-~~~powershell
+~~~bat
 docker compose start
 ~~~
 
@@ -601,17 +645,19 @@ volume and can discard its enrollment.
 
 If Docker is not available:
 
-~~~powershell
-cd C:\Users\GoYuM\Documents\ChatGPT\Aelora\Project\aelora-virtual-gateway
-.\scripts\setup.ps1
-$env:AELORA_BASE_URL = "https://YOUR-REAL-AELORA-DOMAIN"
-$env:AELORA_GATEWAY_HOST = "127.0.0.1"
-$env:AELORA_GATEWAY_PORT = "4100"
-$env:AELORA_GATEWAY_DB = "data/gateway.db"
-.\scripts\start.ps1
+~~~bat
+cd /d C:\Users\GoYuM\Documents\ChatGPT\Aelora\Project\aelora-virtual-gateway
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1
+set AELORA_BASE_URL=https://YOUR-REAL-AELORA-DOMAIN
+set AELORA_GATEWAY_HOST=127.0.0.1
+set AELORA_GATEWAY_PORT=4100
+set AELORA_GATEWAY_DB=data/gateway.db
+.\.venv\Scripts\aelora-virtual-gateway.exe
 ~~~
 
-Keep that PowerShell window open when using native Python.
+Keep that Command Prompt window open when using native Python. The `set`
+values apply only to that open Command Prompt window, which helps avoid
+accidentally changing permanent Windows environment variables.
 
 Checkpoint: the gateway console should open and show its computer date/time,
 equipment, and latest simulated power values.
@@ -716,6 +762,9 @@ deploy main. Keep dev for development and use pull requests into main.
 
 | Problem | Most likely cause | Exact check |
 | --- | --- | --- |
+| `'Get-Item' is not recognized` | A PowerShell command was pasted into Command Prompt | Use the CMD `dir` command shown in Step 5.5 |
+| `.Hash was unexpected at this time` | PowerShell checksum syntax was pasted into Command Prompt | Use `certutil -hashfile` exactly as shown in Step 5.5 |
+| Model file cannot be found | The filename contains copied Markdown escapes | Use `unisolar_capacity_candidate_v3.skops`, with no backslashes before underscores |
 | Web deployment fails during migration | DATABASE_URL is wrong | Web Variables must contain ${{postgres.DATABASE_URL}} |
 | Web health returns 503 | PostgreSQL cannot be reached | Check postgres is active and web DATABASE_URL is a reference |
 | Sign-in redirects to localhost | BETTER_AUTH_URL is wrong | It must equal the exact public HTTPS domain |
