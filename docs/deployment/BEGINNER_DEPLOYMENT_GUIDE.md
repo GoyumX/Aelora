@@ -477,35 +477,42 @@ Do not add a final slash to this URL.
 ### 6.3 Add web variables
 
 Open **aelora-web → Variables → Raw Editor** and paste the following. Replace
-every value that begins with **PASTE_**:
+the three values that begin with **CHANGE_** before applying the variables:
 
 ~~~text
 PORT=3000
 DATABASE_URL=${{postgres.DATABASE_URL}}
-BETTER_AUTH_SECRET=PASTE_BETTER_AUTH_SECRET
-BETTER_AUTH_URL=PASTE_AELORA_PUBLIC_URL
-WEATHER_SYNC_SECRET=PASTE_WEATHER_SYNC_SECRET
-AELORA_ML_BASE_URL=http://aelora-ml.railway.internal:8000
-AELORA_ML_INTERNAL_API_TOKEN=PASTE_THE_SAME_ML_TOKEN_USED_IN_AELORA_ML
-BOOTSTRAP_ADMIN_EMAIL=PASTE_YOUR_ADMIN_EMAIL
-BOOTSTRAP_ADMIN_NAME=PASTE_YOUR_NAME
-BOOTSTRAP_ADMIN_USERNAME=PASTE_YOUR_USERNAME
-BOOTSTRAP_ADMIN_PASSWORD=PASTE_YOUR_ADMIN_PASSWORD
+BETTER_AUTH_SECRET=CHANGE_TO_YOUR_SAVED_BETTER_AUTH_SECRET
+BETTER_AUTH_URL=https://aelora-web-production.up.railway.app
+WEATHER_SYNC_SECRET=CHANGE_TO_YOUR_SAVED_WEATHER_SYNC_SECRET
+AELORA_ML_BASE_URL=http://${{aelora-ml.RAILWAY_PRIVATE_DOMAIN}}:8000
+AELORA_ML_INTERNAL_API_TOKEN=${{aelora-ml.AELORA_ML_INTERNAL_API_TOKEN}}
+BOOTSTRAP_ADMIN_EMAIL=goyum.doingcode@gmail.com
+BOOTSTRAP_ADMIN_NAME=Goyum Methma
+BOOTSTRAP_ADMIN_USERNAME=goyum
+BOOTSTRAP_ADMIN_PASSWORD=CHANGE_TO_YOUR_PRIVATE_ADMIN_PASSWORD
 ~~~
 
-Example of the URL line:
+Do not apply the block while any `CHANGE_TO_` value remains. If you did not
+save the Better Auth and weather secrets from Step 2, run this PowerShell
+command twice and use a different output for each value:
 
-~~~text
-BETTER_AUTH_URL=https://aelora-web-production-xxxx.up.railway.app
+~~~powershell
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ~~~
+
+Choose a unique admin password of 16 to 128 characters that you can enter on
+the sign-in page. Keep all three values private and do not send them in chat or
+commit them to Git.
 
 Critical checks before applying:
 
 - DATABASE_URL must remain the Railway reference
   **${{postgres.DATABASE_URL}}**.
 - AELORA_ML_BASE_URL must use **http**, not https, because it uses Railway's
-  private network.
-- AELORA_ML_INTERNAL_API_TOKEN must exactly match the token in **aelora-ml**.
+  private network. The reference resolves the ML service's private domain.
+- AELORA_ML_INTERNAL_API_TOKEN references the existing **aelora-ml** variable,
+  so you do not reveal or manually duplicate that secret.
 - BETTER_AUTH_URL must use your public **https** URL.
 
 Apply the staged variables.
