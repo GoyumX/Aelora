@@ -341,45 +341,49 @@ Mount path: /model-artifacts
 
 #### First volume upload only: register a Windows SSH key
 
-Railway volume file commands use SSH. Check whether this computer already has
-the expected public key.
+Railway volume file commands use SSH. Use the dedicated filename `railwaykey`
+below so `ssh-keygen` does not ask where the key should be saved.
 
 In Command Prompt:
 
 ~~~bat
-dir "%USERPROFILE%\.ssh\id_ed25519.pub"
+if not exist "%USERPROFILE%\.ssh" mkdir "%USERPROFILE%\.ssh"
+dir "%USERPROFILE%\.ssh\railwaykey.pub"
 ~~~
 
 If Windows lists the file, do not generate another key. If it says the file
 cannot be found, run:
 
 ~~~bat
-ssh-keygen -t ed25519 -C "goyum.doingcode@gmail.com"
+ssh-keygen -t ed25519 -C "goyum.doingcode@gmail.com" -f "%USERPROFILE%\.ssh\railwaykey"
 ~~~
 
-When asked where to save the key, press Enter to accept the default
-`C:\Users\GoYuM\.ssh\id_ed25519` path. Choose and remember a passphrase, or
-press Enter twice for no passphrase on this development computer. Never share
-or upload the private file named `id_ed25519`.
+This command should ask only for a passphrase. Choose and remember one, or press
+Enter twice for no passphrase on this development computer. Wait until the
+normal `C:\...>` prompt returns before entering another command. Never share or
+upload the private file named `railwaykey`.
 
 Register only the public `.pub` file with Railway:
 
 ~~~bat
-railway ssh keys add --key "%USERPROFILE%\.ssh\id_ed25519.pub" --name "Goyum-Windows-PC"
+railway ssh keys add --key "%USERPROFILE%\.ssh\railwaykey.pub" --name "Goyum-Windows-PC"
 railway ssh keys list
 ~~~
 
 If you are following this step in PowerShell, use:
 
 ~~~powershell
-Test-Path "$HOME\.ssh\id_ed25519.pub"
-ssh-keygen -t ed25519 -C "goyum.doingcode@gmail.com"
-railway.cmd ssh keys add --key "$HOME\.ssh\id_ed25519.pub" --name "Goyum-Windows-PC"
+New-Item -ItemType Directory -Force -Path "C:\Users\GoYuM\.ssh"
+Test-Path "C:\Users\GoYuM\.ssh\railwaykey.pub"
+ssh-keygen.exe -t ed25519 -C "goyum.doingcode@gmail.com" -f "C:\Users\GoYuM\.ssh\railwaykey"
+railway.cmd ssh keys add --key "C:\Users\GoYuM\.ssh\railwaykey.pub" --name "Goyum-Windows-PC"
 railway.cmd ssh keys list
 ~~~
 
 In PowerShell, run `ssh-keygen` only when `Test-Path` printed `False`. If it
-printed `True`, skip that line so you do not overwrite an existing key.
+printed `True`, skip that line so you do not overwrite an existing key. At the
+two passphrase questions, answer only the questions. Do not paste the next
+Railway command until the normal `PS C:\...>` prompt returns.
 
 For the current Aelora Railway project, that volume is named
 `aelora-ml-volume`. Upload and list the model with:
@@ -393,7 +397,8 @@ If your volume has a different displayed name, replace only
 `aelora-ml-volume` with that exact name. Do not use the PostgreSQL volume.
 Do not add backslashes before any underscore in the local or remote filename.
 
-The final command must list:
+The final command should display the following path. This is **expected
+output**, not another command to run:
 
 ~~~text
 /unisolar_capacity_candidate_v3.skops
@@ -851,6 +856,8 @@ deploy main. Keep dev for development and use pull requests into main.
 | `railway.ps1 cannot be loaded` | PowerShell script execution is restricted | Run `railway.cmd login`, or switch to Command Prompt |
 | `Volume ... not found` | The guide's volume name does not match Railway's displayed name | Run `railway volume list` and use the volume attached to `aelora-ml` at `/model-artifacts` |
 | `No SSH keys found` | This Windows account has no SSH key registered with Railway | Generate/register the public key using Step 5.6; never upload the private key |
+| `Saving key "railway.cmd ..." failed` | A Railway command was pasted into the `ssh-keygen` filename question | Restart Step 5.6 and use its fixed `-f C:\Users\GoYuM\.ssh\railwaykey` command |
+| `/unisolar... is not recognized` | Expected output was pasted as a PowerShell command | Do not run that path; run only the two Railway commands immediately above it |
 | `'Get-Item' is not recognized` | A PowerShell command was pasted into Command Prompt | Use the CMD `dir` command shown in Step 5.5 |
 | `.Hash was unexpected at this time` | PowerShell checksum syntax was pasted into Command Prompt | Use `certutil -hashfile` exactly as shown in Step 5.5 |
 | Model file cannot be found | The filename contains copied Markdown escapes | Use `unisolar_capacity_candidate_v3.skops`, with no backslashes before underscores |
