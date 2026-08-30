@@ -1,0 +1,48 @@
+name: Web application CI
+
+on:
+  pull_request:
+  push:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: aelora_test
+          POSTGRES_USER: aelora
+          POSTGRES_PASSWORD: ci-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aelora -d aelora_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://aelora:ci-only-password@127.0.0.1:5432/aelora_test?schema=public
+      BETTER_AUTH_SECRET: ci-only-better-auth-secret-with-32-characters
+      BETTER_AUTH_URL: http://127.0.0.1:3000
+      WEATHER_SYNC_SECRET: ci-only-scheduler-secret-with-32-characters
+      AELORA_ML_BASE_URL: http://127.0.0.1:8000
+      AELORA_ML_INTERNAL_API_TOKEN: ci-only-ml-secret-with-at-least-32-characters
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.14"
+          cache: npm
+      - run: npm ci
+      - run: npm run db:deploy
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:run
+      - run: npm run test:scheduler
+      - run: npm run build
+      - run: docker build --tag aelora-web:ci .

@@ -1,5 +1,18 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Production deployment
+
+If this is your first deployment, start with the
+[beginner step-by-step deployment guide](docs/deployment/BEGINNER_DEPLOYMENT_GUIDE.md).
+It begins with environment variables and shows every Railway and gateway step
+in the order you must perform it.
+
+Use the [advanced Aelora A–Z Railway deployment and site-gateway runbook](docs/deployment/RAILWAY_A_TO_Z.md)
+after the first deployment works.
+It covers PostgreSQL migrations and backups, the private ML model volume,
+one-time admin creation, scheduled weather/forecast refresh, GitHub flow, and
+connecting the separately runnable virtual gateway.
+
 ## Getting Started
 
 First, run the development server:
@@ -89,9 +102,3 @@ To learn more about Next.js, take a look at the following resources:
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

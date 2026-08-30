@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [tsconfigPaths(), react()],
   test: {
     environment: "jsdom",
-    exclude: [...configDefaults.exclude, "e2e/**"],
+    exclude: [...configDefaults.exclude, "e2e/**", "ops/scheduler/**"],
     setupFiles: ["./vitest.setup.ts"],
     coverage: {
       provider: "v8",
