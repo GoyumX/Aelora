@@ -519,9 +519,10 @@ Apply the staged variables.
 
 ### 6.4 Configure migrations and health
 
-Open **aelora-web → Settings → Deploy** and enter:
+Open **aelora-web → Settings** and configure these three different fields:
 
 ~~~text
+Build command: npm run build
 Pre-deploy command: npm run db:deploy
 Start command: npm run start
 Healthcheck path: /api/health
@@ -532,20 +533,25 @@ Maximum retries: 5
 
 Do not enter **npm run db:seed**. The seed is development-only.
 
-The **Pre-deploy Command** and **Start Command** are two different Railway
-fields. `npm run db:deploy` must never be the Start Command: it applies the
-database migrations and exits, leaving no web server for the healthcheck.
+The **Build Command**, **Pre-deploy Command**, and **Start Command** are three
+different Railway fields. The Build Command is normally in the **Build**
+section; the other two are in **Deploy**. `npm run db:deploy` must never be the
+Build or Start Command. Railway build containers cannot reach private services
+such as `postgres.railway.internal`, and the migration command exits instead of
+running a web server.
 Before deploying, open the staged-change **Details** and confirm:
 
 ~~~text
+Build Command = npm run build
 Pre-deploy Command = npm run db:deploy
 Start Command = npm run start
 ~~~
 
-If the build plan says `Deploy $ npm run db:deploy`, the command is still in
-the wrong field. Correct it before retrying. A Railpack build should instead
-show `Deploy $ npm run start`; a Dockerfile build may use its built-in
-`CMD ["node", "server.js"]`.
+For a Railpack deployment, its plan should show `build $ npm run build` and
+`Deploy $ npm run start`. If it shows `build $ npm run db:deploy` or
+`Deploy $ npm run db:deploy`, the migration is still in the wrong field.
+Correct it before retrying. A Dockerfile build may instead use its built-in
+build steps and `CMD ["node", "server.js"]`.
 
 Redeploy **aelora-web** and wait until it becomes active.
 
@@ -892,6 +898,7 @@ deploy main. Keep dev for development and use pull requests into main.
 | `.Hash was unexpected at this time` | PowerShell checksum syntax was pasted into Command Prompt | Use `certutil -hashfile` exactly as shown in Step 5.5 |
 | Model file cannot be found | The filename contains copied Markdown escapes | Use `unisolar_capacity_candidate_v3.skops`, with no backslashes before underscores |
 | Web deployment fails during migration | DATABASE_URL is wrong | Web Variables must contain ${{postgres.DATABASE_URL}} |
+| Build fails with P1001 for `postgres.railway.internal` | `npm run db:deploy` was entered as the Build Command | Set Build to `npm run build`; put migrations only in Pre-deploy |
 | Web build succeeds but `/api/health` never becomes available | `npm run db:deploy` was entered as the Start Command | Set Pre-deploy to `npm run db:deploy` and Start Command to `npm run start` |
 | Web health returns 503 | PostgreSQL cannot be reached | Check postgres is active and web DATABASE_URL is a reference |
 | Sign-in redirects to localhost | BETTER_AUTH_URL is wrong | It must equal the exact public HTTPS domain |
