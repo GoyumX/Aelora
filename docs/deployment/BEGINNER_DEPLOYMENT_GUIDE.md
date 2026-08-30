@@ -9,9 +9,10 @@ You already have these GitHub repositories:
 - ML service: https://github.com/GoyumX/aelora-ml-service
 - Virtual gateway: https://github.com/GoyumX/aelora-virtual-gateway
 
-For the first working deployment, select the **dev** branch in Railway for the
-web and ML repositories. The gateway is not deployed to Railway; it runs on
-your computer and sends data to the deployed web application.
+For the first working deployment, select the **dev** branch in Railway. The
+recommended gateway runs on your computer beside future equipment. For an
+undergraduate showcase, Step 10B provides an optional protected Railway-hosted
+gateway instead.
 
 ## What you are going to create
 
@@ -22,6 +23,8 @@ Railway project: Aelora
 |-- aelora-ml            Private Python/FastAPI prediction service
 |-- aelora-web           Public Next.js website
 |-- aelora-scheduler     Private 15-minute background job
+|-- aelora-demo-gateway  Optional public, password-protected showcase simulator
+|   |-- aelora-demo-data Optional persistent SQLite volume at /app/data
 
 Your computer
 |
@@ -29,8 +32,10 @@ Your computer
     Sends simulated solar data over HTTPS to aelora-web
 ~~~
 
-Only **aelora-web** gets a public URL. Do not create public domains for
-PostgreSQL, ML, or the scheduler.
+Only **aelora-web** gets a public URL in the normal architecture. Do not create
+public domains for PostgreSQL, ML, or the scheduler. The optional showcase
+gateway also receives a public URL, but only after public-demo authentication is
+enabled.
 
 ---
 
@@ -75,7 +80,8 @@ This is the most important distinction:
 - **Railway does not use the .env file on your computer.**
 - Web and ML production variables are entered in Railway under
   **Service → Variables**.
-- The gateway runs on your computer, so its local **.env** file is used.
+- A local gateway uses its local **.env** file. A hosted demo gateway uses
+  Railway service variables instead and does not need a production `.env`.
 - Never edit or commit **.env.example**. Copy it to **.env** when instructed.
 - Never push a real **.env** file to GitHub.
 
@@ -687,7 +693,7 @@ Checkpoint: the project canvas should now show **postgres**, **aelora-ml**,
 
 ---
 
-## Step 9 — Edit the gateway .env file
+## Step 9 — Edit the local gateway .env file
 
 The web application is now public, so you can configure the gateway.
 
@@ -707,6 +713,9 @@ AELORA_GATEWAY_HOST=127.0.0.1
 AELORA_GATEWAY_PORT=4100
 AELORA_GATEWAY_DB=data/gateway.db
 AELORA_GATEWAY_RELOAD=false
+AELORA_GATEWAY_PUBLIC_DEMO=false
+AELORA_GATEWAY_CONSOLE_USERNAME=
+AELORA_GATEWAY_CONSOLE_PASSWORD=
 ~~~
 
 Replace only **https://YOUR-REAL-AELORA-DOMAIN**. Use the same public URL from
@@ -724,7 +733,7 @@ The .env file should not be shown. If it is shown, stop and do not commit it.
 
 ---
 
-## Step 10 — Run the virtual gateway
+## Step 10 — Run the virtual gateway locally
 
 ### Recommended method: Docker Desktop
 
@@ -790,6 +799,55 @@ equipment, and latest simulated power values.
 
 ---
 
+## Step 10B — Optional: host the gateway for your showcase
+
+Use either Step 10 local hosting or this hosted option; do not enroll both as
+the same demo gateway. The hosted option lets you open the simulator console on
+any presentation computer while it keeps publishing in Railway.
+
+1. Push the latest `dev` branch of
+   `https://github.com/GoyumX/aelora-virtual-gateway`.
+2. In the same Railway project choose **New → GitHub Repo**, select that repo,
+   use `dev`, and name the service `aelora-demo-gateway`.
+3. Leave Build Command and Start Command empty so Railway uses the root
+   Dockerfile.
+4. Generate a separate console password in Windows Command Prompt:
+
+   ~~~bat
+   node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+   ~~~
+
+5. Add these Railway variables to **aelora-demo-gateway**:
+
+   ~~~text
+   AELORA_BASE_URL=http://${{aelora-web.RAILWAY_PRIVATE_DOMAIN}}:3000
+   AELORA_GATEWAY_HOST=0.0.0.0
+   AELORA_GATEWAY_DB=/app/data/gateway.db
+   AELORA_GATEWAY_RELOAD=false
+   AELORA_GATEWAY_PUBLIC_DEMO=true
+   AELORA_GATEWAY_CONSOLE_USERNAME=goyum-demo
+   AELORA_GATEWAY_CONSOLE_PASSWORD=PASTE_THE_NEW_RANDOM_DEMO_PASSWORD
+   ~~~
+
+   Do not add `PORT`; Railway injects it. Never reuse your Aelora admin
+   password, application secrets, ML token, or enrollment token.
+
+6. Attach one volume named `aelora-demo-data` with mount path `/app/data`.
+7. In Settings set Healthcheck Path to `/api/health`, timeout to 300 seconds,
+   one replica, restart On Failure, and disable Serverless for the presentation.
+8. Under Public Networking generate a domain.
+9. Open the HTTPS domain. The browser must request the demo username and
+   password before showing the console.
+10. Open `/api/health` on that domain and confirm it returns `status: ok`.
+
+If the console opens without a password prompt, remove the public domain and
+check the three `AELORA_GATEWAY_PUBLIC_DEMO`/console variables before continuing.
+The complete hosted procedure, presentation sequence, cleanup, and
+troubleshooting are in the gateway repository's
+[hosted Railway demo guide](https://github.com/GoyumX/aelora-virtual-gateway/blob/dev/docs/RAILWAY_HOSTED_DEMO.md).
+
+---
+
 ## Step 11 — Enroll the gateway into Aelora
 
 1. Sign in to the deployed Aelora website.
@@ -798,11 +856,14 @@ equipment, and latest simulated power values.
 4. Find **Site gateways**.
 5. Choose **Create enrollment**.
 6. Copy the one-time enrollment token. It expires after 30 minutes.
-7. Open the local gateway console:
+7. Open the gateway console. For Step 10 use:
 
    ~~~text
    http://127.0.0.1:4100
    ~~~
+
+   For Step 10B, open the generated Railway HTTPS domain and enter its separate
+   browser username/password.
 
 8. Paste the token into **Aelora enrollment**.
 9. Click the enroll/connect button.
@@ -829,8 +890,8 @@ Now test offline behavior:
 4. Turn communications on again.
 5. Publish and confirm recovery.
 
-Checkpoint: virtual data should now travel from your computer to Railway
-through the same HTTPS ingestion API intended for future real hardware.
+Checkpoint: virtual data should now travel from the selected local or hosted
+gateway through the same ingestion API intended for future real hardware.
 
 ---
 
@@ -854,15 +915,18 @@ refresh process automatically.
 
 ## Final acceptance checklist
 
-- [ ] Railway has four services with the exact names from this guide.
+- [ ] Railway has the four core services with the exact names from this guide.
+- [ ] If using the showcase option, `aelora-demo-gateway` has one `/app/data`
+  volume, one replica, console authentication, and a passing `/api/health`.
 - [ ] PostgreSQL has no public application endpoint.
 - [ ] ML has no public domain and passes /ready.
 - [ ] Web /api/health reports status ok and database ok.
 - [ ] The admin account can sign in.
 - [ ] BOOTSTRAP_ADMIN_PASSWORD was removed from Railway after bootstrap.
 - [ ] The scheduler runs every 15 minutes and exits successfully.
-- [ ] The gateway .env contains the deployed HTTPS URL.
-- [ ] The gateway console opens only on 127.0.0.1:4100.
+- [ ] A local gateway `.env` contains the deployed HTTPS URL and its console
+  opens only on 127.0.0.1:4100; or the hosted demo uses Railway variables and a
+  password-protected HTTPS console.
 - [ ] Enrollment, heartbeat, and telemetry work.
 - [ ] Pausing a device or the gateway produces the expected offline status.
 - [ ] Site location drives stored weather.
@@ -878,8 +942,9 @@ will trigger a rebuild of the connected service.
 - Changes to the ML repository redeploy **aelora-ml**.
 - Changes to the web repository can redeploy both **aelora-web** and
   **aelora-scheduler**.
-- Changes to the gateway repository do not change Railway. Pull the changes on
-  the site computer and rebuild/restart the local gateway.
+- Gateway changes require a pull/rebuild on the site computer for local mode.
+  If `aelora-demo-gateway` is connected to GitHub, pushes to its selected branch
+  redeploy the hosted showcase service.
 
 After the system is stable, create/use **main** branches and change Railway to
 deploy main. Keep dev for development and use pull requests into main.
@@ -910,6 +975,9 @@ deploy main. Keep dev for development and use pull requests into main.
 | Gateway cannot connect | Gateway URL is wrong | .env must use the public HTTPS web domain |
 | Gateway opens but sends no data | Not enrolled or publishing paused | Enroll, enable publishing, then click Publish now |
 | Gateway loses enrollment after restart | Docker volume was deleted | Do not use docker compose down -v |
+| Hosted gateway refuses to start | Public demo username is empty/contains `:`, or password is too short | Correct the gateway service variables; use a password of at least 16 characters |
+| Hosted gateway SQLite permission denied | An old image is deployed | Deploy the latest gateway `dev` containing `docker-entrypoint.sh`; do not add `RAILWAY_RUN_UID=0` |
+| Hosted gateway becomes new after redeploy | Missing or incorrectly mounted volume | Attach one volume to the gateway at exactly `/app/data` |
 | Weather is for the wrong place | Site coordinates are wrong | Save correct location and refresh weather |
 
 ## If you become stuck
@@ -933,3 +1001,4 @@ Do not send the Railway Variables screen if secret values are visible.
 - Railway volume CLI: https://docs.railway.com/cli/volume
 - Railway cron jobs: https://docs.railway.com/cron-jobs
 - Railway private networking: https://docs.railway.com/networking/private-networking
+- Railway Serverless mode: https://docs.railway.com/deployments/serverless

@@ -4,8 +4,9 @@
 > [Deploy Aelora from zero: beginner step-by-step guide](BEGINNER_DEPLOYMENT_GUIDE.md)
 > first. This document is the more detailed operational reference.
 
-This runbook deploys Aelora as a four-service system and keeps the virtual or
-physical site gateway at the solar installation. Follow the sections in order.
+This runbook deploys Aelora as a four-service core system and normally keeps the
+virtual or physical gateway at the solar installation. An optional protected
+Railway-hosted virtual gateway is supported for classroom showcases only.
 
 ## 1. Target architecture
 
@@ -13,6 +14,7 @@ physical site gateway at the solar installation. Follow the sections in order.
 flowchart LR
   Browser[User browser] -->|HTTPS| Web[Aelora Next.js web]
   Gateway[Site gateway\nPC or Raspberry Pi] -->|HTTPS telemetry + heartbeat| Web
+  DemoGateway[Optional Railway demo gateway] -.->|private telemetry + heartbeat| Web
   Web -->|private DATABASE_URL| DB[(Railway PostgreSQL)]
   Web -->|private HTTP + bearer token| ML[Aelora FastAPI ML]
   ML --> Model[(Private model volume)]
@@ -20,9 +22,11 @@ flowchart LR
   Web -->|HTTPS weather request| Weather[Open-Meteo]
 ```
 
-Only `aelora-web` receives a public domain. PostgreSQL and `aelora-ml` stay on
-Railway's private network. The gateway needs outbound HTTPS access but no
-public inbound port. Its local operator console is bound to `127.0.0.1:4100`.
+Only `aelora-web` receives a public domain in the normal architecture.
+PostgreSQL and `aelora-ml` stay private. A site gateway needs outbound HTTPS but
+no public inbound port. The optional demo gateway may expose a separately
+authenticated HTTPS console; it reaches the web service over Railway's private
+network.
 
 The scheduler starts every 15 minutes, calls telemetry roll-ups and the
 intelligence refresh, then exits. The intelligence endpoint applies the
@@ -54,6 +58,9 @@ forecast is not recomputed unnecessarily.
 - `Dockerfile` and `compose.yaml`: portable site-gateway deployment.
 - SQLite state is persisted in the `gateway-data` Docker volume.
 - Only `127.0.0.1:4100` is exposed on the site computer.
+- Optional public-demo mode protects all console/control paths with separate
+  browser credentials while leaving `/api/health` available to Railway.
+- Railway's injected `PORT` is preferred when hosted.
 - `/api/health` is independent of enrollment and cloud availability.
 - `.github/workflows/ci.yml`: Ruff, pytest/coverage, and dependency checks.
 
@@ -348,6 +355,31 @@ Keep the terminal open. If the site computer sleeps, shuts down, or loses the
 internet, Aelora will correctly stop receiving heartbeats and mark equipment
 offline after its stale threshold.
 
+### Optional hosted showcase method
+
+For an undergraduate presentation, deploy the gateway repository as a fifth
+Railway service named `aelora-demo-gateway`. This is a simulator-only
+alternative to the site-computer methods above.
+
+Required Railway variables:
+
+```text
+AELORA_BASE_URL=http://${{aelora-web.RAILWAY_PRIVATE_DOMAIN}}:3000
+AELORA_GATEWAY_HOST=0.0.0.0
+AELORA_GATEWAY_DB=/app/data/gateway.db
+AELORA_GATEWAY_RELOAD=false
+AELORA_GATEWAY_PUBLIC_DEMO=true
+AELORA_GATEWAY_CONSOLE_USERNAME=REPLACE_WITH_DEMO_USERNAME
+AELORA_GATEWAY_CONSOLE_PASSWORD=REPLACE_WITH_RANDOM_PASSWORD_AT_LEAST_16_CHARACTERS
+```
+
+Do not define `PORT`; Railway injects it. Attach one persistent volume at
+`/app/data`, configure `/api/health`, use one replica, disable Serverless during
+the presentation, and generate a public domain. The public URL must show the
+browser authentication prompt. Follow the gateway repository's
+[full hosted demo guide](https://github.com/GoyumX/aelora-virtual-gateway/blob/dev/docs/RAILWAY_HOSTED_DEMO.md)
+for exact beginner steps, verification, demonstration flow, and cleanup.
+
 ## 13. Enroll and connect the gateway
 
 1. Sign in to Aelora as admin or the site owner.
@@ -450,6 +482,7 @@ offsite logical dumps remain necessary.
 - Railway pre-deploy commands: <https://docs.railway.com/deployments/pre-deploy-command>
 - Railway PostgreSQL: <https://docs.railway.com/databases/postgresql>
 - Railway volumes and file upload: <https://docs.railway.com/cli/volume>
+- Railway Serverless mode: <https://docs.railway.com/deployments/serverless>
 - Railway backup/restore: <https://docs.railway.com/guides/postgres-backups-restores>
 - Railway Infrastructure as Code CLI: <https://docs.railway.com/cli>
 - Next.js self-hosting: <https://nextjs.org/docs/app/guides/self-hosting>
