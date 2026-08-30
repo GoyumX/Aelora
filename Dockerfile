@@ -6,6 +6,7 @@ RUN apk add --no-cache libc6-compat openssl
 
 FROM base AS dependencies
 COPY package.json package-lock.json ./
+COPY prisma/schema.prisma ./prisma/schema.prisma
 RUN npm ci
 
 FROM base AS builder
