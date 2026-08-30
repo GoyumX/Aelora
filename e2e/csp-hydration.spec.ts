@@ -17,6 +17,9 @@ test("nonce CSP allows the production sign-in form to hydrate", async ({ page })
   const response = await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
 
   expect(response?.status()).toBe(200);
+  const responseBody = await response!.text();
+  const serverScriptTags = responseBody.match(/<script\b[^>]*>/gi) ?? [];
+
   await expect(page.getByLabel("Email address")).toBeVisible();
   await expect(page.getByLabel("Password")).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
@@ -24,11 +27,11 @@ test("nonce CSP allows the production sign-in form to hydrate", async ({ page })
   const hydrationState = await page.evaluate(() => ({
     fallbackVisible: Boolean(document.querySelector(".animate-pulse")),
     scripts: document.scripts.length,
-    scriptsWithoutNonce: Array.from(document.scripts).filter((script) => !script.nonce).length,
   }));
 
   expect(hydrationState.fallbackVisible).toBe(false);
   expect(hydrationState.scripts).toBeGreaterThan(0);
-  expect(hydrationState.scriptsWithoutNonce).toBe(0);
+  expect(serverScriptTags.length).toBeGreaterThan(0);
+  expect(serverScriptTags.every((script) => /\snonce=(?:"[^"]+"|'[^']+')/i.test(script))).toBe(true);
   expect(cspErrors).toEqual([]);
 });
