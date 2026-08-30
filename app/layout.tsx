@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { headers } from "next/headers";
+import { connection } from "next/server";
 
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -22,11 +24,20 @@ export const metadata: Metadata = {
   description: "Intelligent solar monitoring, forecasting, and performance management.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  await connection();
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <body className="min-h-dvh antialiased">
-        <ThemeProvider attribute="class" defaultTheme="system" disableTransitionOnChange enableSystem>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          disableTransitionOnChange
+          enableSystem
+          nonce={nonce}
+        >
           <TooltipProvider>{children}</TooltipProvider>
           <Toaster richColors />
         </ThemeProvider>
