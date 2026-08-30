@@ -523,6 +523,7 @@ Open **aelora-web → Settings → Deploy** and enter:
 
 ~~~text
 Pre-deploy command: npm run db:deploy
+Start command: npm run start
 Healthcheck path: /api/health
 Healthcheck timeout: 300
 Restart policy: On Failure
@@ -530,6 +531,21 @@ Maximum retries: 5
 ~~~
 
 Do not enter **npm run db:seed**. The seed is development-only.
+
+The **Pre-deploy Command** and **Start Command** are two different Railway
+fields. `npm run db:deploy` must never be the Start Command: it applies the
+database migrations and exits, leaving no web server for the healthcheck.
+Before deploying, open the staged-change **Details** and confirm:
+
+~~~text
+Pre-deploy Command = npm run db:deploy
+Start Command = npm run start
+~~~
+
+If the build plan says `Deploy $ npm run db:deploy`, the command is still in
+the wrong field. Correct it before retrying. A Railpack build should instead
+show `Deploy $ npm run start`; a Dockerfile build may use its built-in
+`CMD ["node", "server.js"]`.
 
 Redeploy **aelora-web** and wait until it becomes active.
 
@@ -876,6 +892,7 @@ deploy main. Keep dev for development and use pull requests into main.
 | `.Hash was unexpected at this time` | PowerShell checksum syntax was pasted into Command Prompt | Use `certutil -hashfile` exactly as shown in Step 5.5 |
 | Model file cannot be found | The filename contains copied Markdown escapes | Use `unisolar_capacity_candidate_v3.skops`, with no backslashes before underscores |
 | Web deployment fails during migration | DATABASE_URL is wrong | Web Variables must contain ${{postgres.DATABASE_URL}} |
+| Web build succeeds but `/api/health` never becomes available | `npm run db:deploy` was entered as the Start Command | Set Pre-deploy to `npm run db:deploy` and Start Command to `npm run start` |
 | Web health returns 503 | PostgreSQL cannot be reached | Check postgres is active and web DATABASE_URL is a reference |
 | Sign-in redirects to localhost | BETTER_AUTH_URL is wrong | It must equal the exact public HTTPS domain |
 | ML stays unready | Model is missing from the volume | List the volume and verify /unisolar_capacity_candidate_v3.skops |
